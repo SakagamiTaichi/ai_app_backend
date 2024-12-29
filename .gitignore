@@ -1,0 +1,9 @@
+# 開発環境固有のファイル
+.devcontainer/
+.vscode/
+
+# 共通の除外ファイル
+__pycache__/
+*.pyc
+.env
+venv/

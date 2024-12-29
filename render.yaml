@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: ai_app_backend
+    runtime: python
+    plan: free
+    autoDeploy: true
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
