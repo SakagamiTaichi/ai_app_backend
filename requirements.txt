@@ -9,3 +9,5 @@ retry
 decorator
 fastapi
 uvicorn
+supabase
+psycopg2[binary]
