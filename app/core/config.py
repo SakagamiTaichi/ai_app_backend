@@ -9,8 +9,6 @@ class Settings(BaseSettings):
     TAVILY_API_KEY: str
     OPENAI_MODEL: str = "gpt-4o-mini"
     TEMPERATURE: float = 0.7
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
     DATABASE_URL: str
 
     class Config:
