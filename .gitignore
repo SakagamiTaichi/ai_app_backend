@@ -1,6 +1,6 @@
 # 開発環境固有のファイル
 .devcontainer/
-# .vscode/
+.vscode/
 
 # 共通の除外ファイル
 __pycache__/
