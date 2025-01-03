@@ -9,6 +9,7 @@ from app.core.config import settings
 from supabase import create_client, Client
 from app.core.config import settings
 import pytz
+from openai import OpenAI
 
 
 class RecipeService:
@@ -18,6 +19,7 @@ class RecipeService:
             temperature=settings.TEMPERATURE
         )
         self.client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+        self.image_generator = RecipeImageGenerator()
 
     def generate_recipe(self, ingredients: List[str]) -> Recipe:
         input_ingredient = ", ".join(ingredients)
@@ -37,6 +39,8 @@ class RecipeService:
         )
         chain = prompt | self.llm.with_structured_output(Recipe)
         generated_recipe = chain.invoke({"ingredient": input_ingredient})
+
+        image_data = self.image_generator.generate_image(generated_recipe)
 
         # 生成されたレシピをSuparbaseに保存する
 
@@ -176,4 +180,55 @@ class RecipeService:
 
         except Exception as e:
             print(f"Error fetching recipe detail: {str(e)}")
-            raise        
+            raise
+
+class RecipeImageGenerator:
+    def __init__(self):
+        self.client = OpenAI()
+
+    def generate_image(self, recipe: Recipe) -> str:
+        """
+        レシピの内容から料理の完成画像を生成し、base64エンコードされた文字列を返します。
+        
+        Args:
+            recipe (Recipe): 生成されたレシピオブジェクト
+            
+        Returns:
+            str: base64エンコードされた画像データ
+        """
+        # プロンプトの生成
+        prompt = self._create_image_prompt(recipe)
+        
+        # 画像の生成
+        try:
+            response = self.client.images.generate(
+              model="dall-e-3",
+              prompt=prompt,
+              size="1792x1024",
+              quality="standard",
+              response_format="b64_json",
+              n=1,
+            )
+            img_str = response.data[0].b64_json
+            
+            return img_str
+            
+        except Exception as e:
+            print(f"画像生成中にエラーが発生しました: {str(e)}")
+            return None
+
+    def _create_image_prompt(self, recipe: Recipe) -> str:
+        """
+        レシピの内容から画像生成用のプロンプトを作成します。
+        
+        Args:
+            recipe (Recipe): レシピオブジェクト
+            
+        Returns:
+            str: 画像生成用のプロンプト
+        """
+        prompt = f"完成した料理の写真: {recipe.dish_name}。"
+        prompt += "プロフェッショナルな料理写真のように、美しく盛り付けられ、"
+        prompt += "鮮やかで食欲をそそる見た目。上からの俯瞰アングル。"
+        prompt += "自然光で照らされた、クリアで高品質な画像。"
+        prompt += "背景はシンプルで、料理を引き立てる。"
