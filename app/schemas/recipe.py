@@ -18,6 +18,7 @@ class Recipe(BaseModel):
     dish_name: str = Field(..., description="料理名")
     ingredients: List[Ingredient] = Field(..., description="材料と量のリスト")
     steps: List[str] = Field(..., description="調理手順のリスト")
+    tips: List[str] = Field("", description="レシピのコツや注意事項")
     # 作成時刻を日本時刻で取得するように修正
     created_at: datetime.datetime = Field(
         default_factory=get_current_jst_time,
@@ -40,6 +41,7 @@ class RecipeHistoryDetail(BaseModel):
     dish_name: str = Field(..., description="料理名")
     ingredients: List[Ingredient] = Field(..., description="材料と量のリスト")
     steps: List[str] = Field(..., description="調理手順のリスト")
+    tips: List[str] = Field("", description="レシピのコツや注意事項")
     created_at: datetime.datetime = Field(..., description="レシピが生成された日時")
 
 

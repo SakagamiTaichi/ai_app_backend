@@ -31,6 +31,7 @@ class RecipeService:
             "   - 詳細な調理手順\n"
             "3. 一般家庭で実現可能なレシピであること\n"
             "4. 調理手順は具体的で分かりやすく記述すること\n"
+            "5. レシピのコツや注意事項があれば記載すること\n"
             "\n"
             "メイン食材: {ingredient}"
         )
@@ -69,6 +70,17 @@ class RecipeService:
                 for step in generated_recipe.steps
             ]
             steps_response = self.client.table('recipe_steps').insert(steps_data).execute()
+
+            #4. recipe_tipsテーブルにコツや注意事項を挿入
+            tips_data = [
+                {
+                    "recipe_id": str(generated_recipe.id),
+                    "tip": tip
+                }
+                for tip in generated_recipe.tips
+            ]
+
+            tips_response = self.client.table('recipe_tips').insert(tips_data).execute()
             
         except Exception as e:
             # エラーが発生した場合は適切なエラーハンドリングを行う
@@ -130,6 +142,12 @@ class RecipeService:
                 .eq('recipe_id', str(recipe_id)) \
                 .order('id') \
                 .execute()
+            
+            # レシピのコツや注意事項を取得
+            tips_response = self.client.table('recipe_tips') \
+                .select('*') \
+                .eq('recipe_id', str(recipe_id)) \
+                .execute()
 
             # 材料リストを作成
             ingredients = [
@@ -143,12 +161,16 @@ class RecipeService:
             # 手順リストを作成
             steps = [step['step'] for step in steps_response.data]
 
+            # レシピのコツや注意事項リストを作成
+            tips = [tip['tip'] for tip in tips_response.data]
+
             # RecipeHistoryDetailモデルを作成して返す
             return RecipeHistoryDetail(
                 id=UUID(recipe_response.data['id']),
                 dish_name=recipe_response.data['dish_name'],
                 ingredients=ingredients,
                 steps=steps,
+                tips=tips,
                 created_at=datetime.fromisoformat(recipe_response.data['created_at'].replace('Z', '+00:00'))
             )
 
