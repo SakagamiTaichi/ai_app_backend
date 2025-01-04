@@ -21,9 +21,11 @@ class Recipe(BaseModel):
     tips: List[str] = Field("", description="レシピのコツや注意事項")
     # 作成時刻を日本時刻で取得するように修正
     created_at: datetime.datetime = Field(
+        ...,
         default_factory=get_current_jst_time,
         description="レシピが生成された日時"
     )
+    image_url: str = Field("", description="料理の画像URL")
 
 class RecipeRequest(BaseModel):
     ingredients: List[str] = Field(..., description="レシピ生成に使用する食材リスト")
@@ -43,6 +45,7 @@ class RecipeHistoryDetail(BaseModel):
     steps: List[str] = Field(..., description="調理手順のリスト")
     tips: List[str] = Field("", description="レシピのコツや注意事項")
     created_at: datetime.datetime = Field(..., description="レシピが生成された日時")
+    image_url: str = Field("", description="料理の画像URL")
 
 
     

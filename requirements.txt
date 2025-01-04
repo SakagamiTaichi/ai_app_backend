@@ -12,3 +12,4 @@ uvicorn
 supabase
 psycopg2[binary]
 pytz
+requests

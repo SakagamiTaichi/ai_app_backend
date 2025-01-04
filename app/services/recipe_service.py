@@ -1,15 +1,15 @@
 from datetime import datetime
 from typing import List
+from urllib.parse import urlparse
 from uuid import UUID
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
+import requests
 from app.schemas.recipe import Ingredient, Recipe, RecipeHistories, RecipeHistory, RecipeHistoryDetail
+from supabase import create_client
 from app.core.config import settings
-from app.core.config import settings
-from supabase import create_client, Client
-from app.core.config import settings
-import pytz
 from openai import OpenAI
+import os
 
 
 class RecipeService:
@@ -20,6 +20,41 @@ class RecipeService:
         )
         self.client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
         self.image_generator = RecipeImageGenerator()
+        self.openai = OpenAI()
+    
+    def upload_image(self, file_path:str) -> str:
+        """画像をアップロードする関数"""
+        try:
+            bucket_name = "ai-images"
+            response = requests.get(file_path)
+            if response.status_code == 200:
+                # URLからファイル名を取得
+                file_name = os.path.basename(urlparse(file_path).path)
+                if not file_name:  # ファイル名が取得できない場合
+                    file_name = "temp_image.png"
+                
+                # 一時ファイルとして保存
+                temp_path = f"temp_{file_name}"
+                with open(temp_path, 'wb') as f:
+                    f.write(response.content)
+                
+                # 一時ファイルをアップロード
+                with open(temp_path, 'rb') as f:
+                    response = self.client.storage.from_(bucket_name).upload(
+                        path=file_name, 
+                        file=f
+                    )
+                
+                # 一時ファイルを削除
+                os.remove(temp_path)
+
+            # アップロードされたファイルのURLを取得
+            file_url = self.client.storage.from_(bucket_name).get_public_url(file_name)
+            return file_url
+        
+        except Exception as e:
+            print(f"アップロードエラー: {str(e)}")
+            return None     
 
     def generate_recipe(self, ingredients: List[str]) -> Recipe:
         input_ingredient = ", ".join(ingredients)
@@ -42,6 +77,13 @@ class RecipeService:
 
         image_data = self.image_generator.generate_image(generated_recipe)
 
+        if image_data:
+            image_url = self.upload_image(image_data)
+            # image_urlの最後の?を削除
+            image_url = image_url.split("?")[0]
+
+        generated_recipe.image_url = image_url
+
         # 生成されたレシピをSuparbaseに保存する
 
         try:
@@ -50,7 +92,8 @@ class RecipeService:
             recipe_data = {
                 "id": str(generated_recipe.id),  # UUIDを文字列に変換
                 "dish_name": generated_recipe.dish_name,
-                "created_at": generated_recipe.created_at.isoformat()
+                "created_at": generated_recipe.created_at.isoformat(),
+                "image_url": image_url
             }
             recipe_response = self.client.table('recipe').insert(recipe_data).execute()
             
@@ -152,6 +195,7 @@ class RecipeService:
                 .select('*') \
                 .eq('recipe_id', str(recipe_id)) \
                 .execute()
+            
 
             # 材料リストを作成
             ingredients = [
@@ -175,7 +219,8 @@ class RecipeService:
                 ingredients=ingredients,
                 steps=steps,
                 tips=tips,
-                created_at=datetime.fromisoformat(recipe_response.data['created_at'].replace('Z', '+00:00'))
+                created_at=datetime.fromisoformat(recipe_response.data['created_at'].replace('Z', '+00:00')),
+                image_url=recipe_response.data['image_url']
             )
 
         except Exception as e:
@@ -184,32 +229,32 @@ class RecipeService:
 
 class RecipeImageGenerator:
     def __init__(self):
-        self.client = OpenAI()
+        self.openAI = OpenAI()
 
     def generate_image(self, recipe: Recipe) -> str:
         """
-        レシピの内容から料理の完成画像を生成し、base64エンコードされた文字列を返します。
+        レシピの内容から料理の完成画像を生成し、画像URLを返します。
         
         Args:
             recipe (Recipe): 生成されたレシピオブジェクト
             
         Returns:
-            str: base64エンコードされた画像データ
+            str: 画像URL
         """
         # プロンプトの生成
         prompt = self._create_image_prompt(recipe)
         
         # 画像の生成
         try:
-            response = self.client.images.generate(
+            response = self.openAI.images.generate(
               model="dall-e-3",
               prompt=prompt,
               size="1792x1024",
               quality="standard",
-              response_format="b64_json",
+              response_format="url",
               n=1,
             )
-            img_str = response.data[0].b64_json
+            img_str = response.data[0].url
             
             return img_str
             
@@ -229,6 +274,8 @@ class RecipeImageGenerator:
         """
         prompt = f"完成した料理の写真: {recipe.dish_name}。"
         prompt += "プロフェッショナルな料理写真のように、美しく盛り付けられ、"
-        prompt += "鮮やかで食欲をそそる見た目。上からの俯瞰アングル。"
-        prompt += "自然光で照らされた、クリアで高品質な画像。"
-        prompt += "背景はシンプルで、料理を引き立てる。"
+        prompt += "鮮やかで食欲をそそる見た目。"
+        prompt += "クリアで高品質な画像。"
+        prompt += "料理以外のオブジェクトは表示しない"
+
+        return prompt
