@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o-mini"
     TEMPERATURE: float = 0.7
     DATABASE_URL: str
+    SUPABASE_URL: str
+    SUPABASE_KEY: str
 
     class Config:
         case_sensitive = True
