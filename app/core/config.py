@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     SUPABASE_URL: str
     SUPABASE_KEY: str
+    LANGCHAIN_TRACING_V2 :bool
+    LANGCHAIN_ENDPOINT:str
+    LANGCHAIN_API_KEY:str
+    LANGCHAIN_PROJECT:str
 
     class Config:
         case_sensitive = True
