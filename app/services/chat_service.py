@@ -8,11 +8,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_postgres import PGVector
 from app.core.config import settings
-from langchain_core.messages import HumanMessage, AIMessage
-from langchain_core.runnables.history import RunnableWithMessageHistory
 
 class RagChatService:
-    def init(self):
+    def __init__(self):
         # Initialize LangSmith client
         self.client = Client()
 
@@ -69,12 +67,10 @@ class RagChatService:
             }
         )
 
-        messages = await self.history.aget_messages()
 
         # Create RAG chain
         rag_chain = (
             {
-                "chat_history": messages,
                 "context": retriever | self._format_docs,
                 "question": RunnablePassthrough()
             }
@@ -86,7 +82,6 @@ class RagChatService:
         async for chunk in rag_chain.astream(user_input):
             if chunk.content:
                 time.sleep(0.05)  # Rate limiting
-                ai_response += chunk.content
                 yield self.format_sse_message(chunk.content)
 
         yield "event: close\ndata: Stream ended\n\n"

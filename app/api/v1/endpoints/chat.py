@@ -12,7 +12,7 @@ chat_service = RagChatService()
 async def chat_stream(message: str) -> StreamingResponse:
     try:
         return StreamingResponse(
-            chat_service.stream_response(message,str(uuid.uuid4())),
+            chat_service.stream_response(message),
             media_type="text/event-stream"
         )
     except Exception as e:
