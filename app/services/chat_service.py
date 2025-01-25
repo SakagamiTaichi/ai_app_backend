@@ -1,44 +1,92 @@
+
 import time
 import json
 from typing import AsyncGenerator
 from langsmith.client import Client
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage
-from langchain_core.output_parsers import StrOutputParser
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_postgres import PGVector
 from app.core.config import settings
+from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.runnables.history import RunnableWithMessageHistory
 
-class ChatService:
-    def __init__(self):
+class RagChatService:
+    def init(self):
         # Initialize LangSmith client
         self.client = Client()
-        
-        # Pull the prompt from LangSmith
-        self.system_prompt = self.client.pull_prompt(
-            "chat_prompt"  # Replace with your actual prompt identifier
+
+        # Initialize vector store
+        self.vector_store = PGVector(
+            async_mode=True,
+            connection=settings.ASYNC_DATABASE_URL,
+            embeddings=OpenAIEmbeddings(model="text-embedding-3-small"),
+            collection_metadata={"description": "Document embeddings"},
+            use_jsonb=True,
+            create_extension=False,
+            engine_args = {
+                           "pool_size": 10,  # 最大接続数
+                           "max_overflow": 2,  # 追加で許可する接続数
+                           "pool_timeout": 30,  # 接続待ちのタイムアウト（秒）
+                           "pool_recycle": 1800,  # 接続を再利用する時間（秒）
+                           "connect_args": {"statement_cache_size": 0}  # prepared statementsのキャッシュを無効化
+
+                          }
         )
-        
+
+        # Initialize LLM
         self.llm = ChatOpenAI(
             model=settings.OPENAI_MODEL,    
             temperature=settings.TEMPERATURE,
             streaming=True
         )
 
+        self.rag_prompt = ChatPromptTemplate.from_template('''
+            以下の文脈を踏まえて、システムプロンプトに従って質問に回答してください。
+
+            文脈: {context}
+
+            質問：{question}
+        ''')
+
+    def _format_docs(self, docs):
+        """Retrieved documents をフォーマットする"""
+        return "\n\n".join(doc.page_content for doc in docs)
+
     def format_sse_message(self, data: str) -> str:
         return f"data: {json.dumps({'content': data})}\n\n"
 
     async def stream_response(self, user_input: str) -> AsyncGenerator[str, None]:
-        # Use the pulled prompt template to format the system message
-        system_message = self.system_prompt.format()
-        
-        messages = [
-            SystemMessage(content=system_message),
-            HumanMessage(content=user_input)
-        ]
 
-        async for chunk in self.llm.astream(messages):
+        # Setup retriever with MMR search
+        retriever = self.vector_store.as_retriever(
+            search_type="similarity",
+            search_kwargs={
+                "k": 4,
+                'score_threshold': 0.7,
+                "fetch_k": 20,
+                "lambda_mult": 0.3
+            }
+        )
+
+        messages = await self.history.aget_messages()
+
+        # Create RAG chain
+        rag_chain = (
+            {
+                "chat_history": messages,
+                "context": retriever | self._format_docs,
+                "question": RunnablePassthrough()
+            }
+            | self.rag_prompt
+            | self.llm
+        )
+
+        # Stream the response
+        async for chunk in rag_chain.astream(user_input):
             if chunk.content:
-                # 0.1秒待機
-                time.sleep(0.1)
+                time.sleep(0.05)  # Rate limiting
+                ai_response += chunk.content
                 yield self.format_sse_message(chunk.content)
-              
+
         yield "event: close\ndata: Stream ended\n\n"

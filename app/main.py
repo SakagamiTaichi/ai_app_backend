@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.v1.endpoints import chat, items, text_to_sql
+from app.api.v1.endpoints import chat, items, rag, text_to_sql
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import uvicorn
@@ -25,5 +25,6 @@ app.include_router(items.router, prefix=settings.API_V1_STR)
 app.include_router(recipes.router, prefix=settings.API_V1_STR)
 app.include_router(chat.router, prefix=settings.API_V1_STR)
 app.include_router(text_to_sql.router, prefix=settings.API_V1_STR)
+app.include_router(rag.router, prefix=settings.API_V1_STR)
 
 

@@ -48,4 +48,6 @@ class RecipeHistoryDetail(BaseModel):
     image_url: str = Field("", description="料理の画像URL")
 
 
+
+
     
