@@ -40,7 +40,6 @@ class RagService:
             質問：{question}
         ''')
 
-        self.history = ChatMessageHistory()
 
     def _format_docs(self, docs):
         """Retrieved documents をフォーマットする"""
@@ -108,11 +107,9 @@ class RagService:
                                                     }
                                                    )
         
-        history = self.history.aget_messages()
         
         chain = (
             {
-                "chat_history": history,
                 "context": retriever | self._format_docs,
                 "question": RunnablePassthrough()
             }
@@ -122,7 +119,6 @@ class RagService:
         )
         
         output = chain.invoke(question)
-        await self.history.aadd_messages([HumanMessage(content=question)])
 
 
         return output

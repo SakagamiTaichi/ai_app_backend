@@ -9,10 +9,10 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 chat_service = RagChatService()
 
 @router.get("/stream")
-async def chat_stream(message: str) -> StreamingResponse:
+async def chat_stream(message: str,session_id : str) -> StreamingResponse:
     try:
         return StreamingResponse(
-            chat_service.stream_response(message),
+            chat_service.stream_response(message,session_id),
             media_type="text/event-stream"
         )
     except Exception as e:

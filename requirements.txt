@@ -16,3 +16,4 @@ requests
 langchain-text-splitters
 langchain-postgres
 asyncpg[binary]
+tavily-python
