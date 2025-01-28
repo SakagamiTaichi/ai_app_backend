@@ -46,14 +46,6 @@ class RagService:
         return "\n\n".join(doc.page_content for doc in docs)
 
     def embedding_model(self, information: str) -> str:
-        """情報をEmbeddingモデルに登録します
-        
-        Args:
-            information (str): ベクトルストアに保存する情報テキスト
-            
-        Returns:
-            str: 処理の結果を示すステータスメッセージ
-        """
         # テキストをチャンクに分割する
         text_splitter = RecursiveCharacterTextSplitter(
             # デフォルトの区切り文字を使用

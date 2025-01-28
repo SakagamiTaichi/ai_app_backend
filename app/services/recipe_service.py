@@ -2,10 +2,11 @@ from datetime import datetime
 from typing import List
 from urllib.parse import urlparse
 from uuid import UUID
+import uuid
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 import requests
-from app.schemas.recipe import Ingredient, Recipe, RecipeHistories, RecipeHistory, RecipeHistoryDetail
+from app.schemas.recipe import Ingredient, Recipe, RecipeHistories, RecipeHistory, RecipeHistoryDetail, RecipeResponse, get_current_jst_time
 from supabase import create_client
 from app.core.config import settings
 from openai import OpenAI
@@ -72,17 +73,32 @@ class RecipeService:
             "\n"
             "メイン食材: {ingredient}"
         )
-        chain = prompt | self.llm.with_structured_output(Recipe)
+        chain = prompt | self.llm.with_structured_output(RecipeResponse)
         generated_recipe = chain.invoke({"ingredient": input_ingredient})
 
         image_data = self.image_generator.generate_image(generated_recipe)
 
+
+        
         if image_data:
             image_url = self.upload_image(image_data)
             # image_urlの最後の?を削除
             image_url = image_url.split("?")[0]
 
-        generated_recipe.image_url = image_url
+        # レシピのID
+        id = uuid.uuid4()
+        # 現在日本時刻
+        created_at = get_current_jst_time()
+
+        return_recipe = Recipe(
+            id=id,
+            dish_name=generated_recipe.dish_name,
+            ingredients=generated_recipe.ingredients,
+            steps=generated_recipe.steps,
+            tips=generated_recipe.tips,
+            created_at=created_at,
+            image_url=image_url
+        )
 
         # 生成されたレシピをSuparbaseに保存する
 
@@ -90,9 +106,9 @@ class RecipeService:
 
             # 1. recipeテーブルにメインレコードを挿入
             recipe_data = {
-                "id": str(generated_recipe.id),  # UUIDを文字列に変換
+                "id": str(id),  # UUIDを文字列に変換
                 "dish_name": generated_recipe.dish_name,
-                "created_at": generated_recipe.created_at.isoformat(),
+                "created_at": created_at.isoformat(),
                 "image_url": image_url
             }
             recipe_response = self.client.table('recipe').insert(recipe_data).execute()
@@ -100,7 +116,7 @@ class RecipeService:
             # 2. recipe_ingredientsテーブルに材料を挿入
             ingredients_data = [
                 {
-                    "recipe_id": str(generated_recipe.id),
+                    "recipe_id": str(id),
                     "name": ingredient.name,
                     "amount": ingredient.amount
                 }
@@ -111,7 +127,7 @@ class RecipeService:
             # 3. recipe_stepsテーブルに手順を挿入
             steps_data = [
                 {
-                    "recipe_id": str(generated_recipe.id),
+                    "recipe_id": str(id),
                     "step": step
                 }
                 for step in generated_recipe.steps
@@ -121,7 +137,7 @@ class RecipeService:
             #4. recipe_tipsテーブルにコツや注意事項を挿入
             tips_data = [
                 {
-                    "recipe_id": str(generated_recipe.id),
+                    "recipe_id": str(id),
                     "tip": tip
                 }
                 for tip in generated_recipe.tips
@@ -136,7 +152,7 @@ class RecipeService:
             raise
 
 
-        return generated_recipe
+        return return_recipe
     
     
     def get_recipe_histories(self) -> RecipeHistories:
@@ -231,18 +247,17 @@ class RecipeImageGenerator:
     def __init__(self):
         self.openAI = OpenAI()
 
-    def generate_image(self, recipe: Recipe) -> str:
-        """
-        レシピの内容から料理の完成画像を生成し、画像URLを返します。
-        
-        Args:
-            recipe (Recipe): 生成されたレシピオブジェクト
-            
-        Returns:
-            str: 画像URL
-        """
+    def generate_image(self, recipe: RecipeResponse) -> str:
         # プロンプトの生成
-        prompt = self._create_image_prompt(recipe)
+        # prompt = self._create_image_prompt(recipe)
+
+        prompt = f"""
+        完成した料理の写真: {recipe.dish_name}。
+        プロフェッショナルな料理写真のように、美しく盛り付けられ、
+        鮮やかで食欲をそそる見た目。
+        クリアで高品質な画像。
+        料理以外のオブジェクトは表示しない
+        """
         
         # 画像の生成
         try:
@@ -261,21 +276,3 @@ class RecipeImageGenerator:
         except Exception as e:
             print(f"画像生成中にエラーが発生しました: {str(e)}")
             return None
-
-    def _create_image_prompt(self, recipe: Recipe) -> str:
-        """
-        レシピの内容から画像生成用のプロンプトを作成します。
-        
-        Args:
-            recipe (Recipe): レシピオブジェクト
-            
-        Returns:
-            str: 画像生成用のプロンプト
-        """
-        prompt = f"完成した料理の写真: {recipe.dish_name}。"
-        prompt += "プロフェッショナルな料理写真のように、美しく盛り付けられ、"
-        prompt += "鮮やかで食欲をそそる見た目。"
-        prompt += "クリアで高品質な画像。"
-        prompt += "料理以外のオブジェクトは表示しない"
-
-        return prompt

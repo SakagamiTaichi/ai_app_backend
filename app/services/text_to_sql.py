@@ -1,15 +1,15 @@
 from dataclasses import Field
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Type
 from langchain_openai import ChatOpenAI
 from openai import BaseModel
-from app.schemas.personal_information import PersonalInformationResponse
+from app.schemas.personal_information import PersonalInformation
 from app.core.config import settings
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.utilities import SQLDatabase
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_core.language_models import BaseLanguageModel
-
-from app.schemas.text_to_sql import TableData
+from supabase import create_client
+from app.schemas.text_to_sql import Column, PersonalInformationResponse, TableData
     
 class TextToSQLService:
     def __init__(self):
@@ -18,75 +18,82 @@ class TextToSQLService:
             model=settings.OPENAI_MODEL,    
             temperature=settings.TEMPERATURE,
         )
+        self.client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+
+    def get_init_data(self) -> PersonalInformationResponse:
+        # 10行だけ取得する
+        response = self.client.table('personal_information').select('*').limit(10).execute()
+
+        # レスポンスから個人情報を取得
+        informations = [
+                PersonalInformation(
+                    id=record['id'],
+                    name=record['name'],
+                    name_kana=record['name_kana'],
+                    sex=record['sex'],
+                    phone_number=record['phone_number'],
+                    mail=record['mail'],
+                    postcode=record['postcode'],
+                    address=record['address'],
+                    birthday=record['birthday'],
+                    age=record['age'],
+                    blood_type=record['blood_type']
+                )
+                for record in response.data
+            ]
+
+        return PersonalInformationResponse(informations=informations)
+    
     def get_text_to_sql(self,input: str) -> TableData:
 
-        # SQL文を実行するツール
-        execute_query = QuerySQLDataBaseTool(db=self.db)
 
         # SQL文を生成するチェイン
         write_query:str = create_custom_sql_query_chain(self.llm, self.db, input)
+        # SQL文を実行するツール
+        execute_query = QuerySQLDataBaseTool(db=self.db)
 
         # クエリを実行
         response = execute_query.invoke({"query": write_query})
 
         return self._convert_to_structured_output(
-            table_info=self.db.get_table_info(),
             raw_result=response,
             sql_query=write_query,
-            original_input=input
         )
     
-    def _convert_to_structured_output(
-        self, 
-        table_info: str,
-        raw_result: List[tuple], 
-        sql_query: str, 
-        original_input: str
-    ) -> TableData:
-        # 構造化出力用のプロンプトテンプレート
-        template = """
-あなたはデータベースの結果をフロントエンド用に整形する専門家です。
-以下のデータとコンテキストから、適切な形式のレスポンスを生成してください。
-
-テーブルの情報: {table_info}
-ユーザーの入力: {original_input}
-実行されたSQL: {sql_query}
-クエリの結果: {raw_result}
-
-以下の形式で結果を整形してください：
-
-class Column(BaseModel):
-    //テーブルのカラムを表現するモデル
-    field: str = Field(description="カラム名")
-    headerName: str = Field(description="カラムのヘッダー名")
-    width: int = Field(description="カラムに必要と思われる幅")
-
-class TableData(BaseModel):
-    //テーブル形式のデータを表現するモデル
-    columns: List[Column] = Field(description="テーブルのカラム名のリスト")
-    rows: List[Dict[str, Any]] = Field(description="各行のデータを含む辞書のリスト")
-
-```
-
-結果は必ずこの形式に従ってください。
-"""
-        # プロンプトの作成と実行
-        prompt = ChatPromptTemplate.from_template(template)
+    def _convert_to_structured_output(self,raw_result: str, sql_query: str) -> TableData:
+        # 文字列からPythonのデータ構造に変換
+        data = eval(raw_result)
         
-        format_chain = (
-            prompt 
-            | self.llm.with_structured_output(TableData)
-        )
+        # データが空の場合の処理
+        if not data:
+            return TableData(
+                sql=sql_query,
+                columns=[],
+                rows=[]
+            )
         
-        # 構造化データの生成
-        structured_output = format_chain.invoke({
-            "table_info": table_info,
-            "original_input": original_input,
-            "sql_query": sql_query,
-            "raw_result": str(raw_result)
-        })
+        # 最初の行からカラム数を取得して動的にカラムを生成
+        num_columns = len(data[0])
+        columns = [
+            Column(
+                field=f"column_{i}",  # プログラムでの参照用の名前
+                headerName=f"列{i+1}",  # 表示用の名前
+                width=150  # 日本語テキストを考慮して幅を広めに設定
+            )
+            for i in range(num_columns)
+        ]
         
-        return structured_output        
+        # 各行のデータをカラムとマッピング
+        rows = [
+            {f"column_{i}": value for i, value in enumerate(row)}
+            for row in data
+        ]
+        
+        return TableData(
+            sql=sql_query,
+            columns=columns,
+            rows=rows
+        ) 
 
 def create_custom_sql_query_chain(
     llm: BaseLanguageModel,

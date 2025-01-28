@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 from pydantic import BaseModel
 
-class PersonalInformationResponse(BaseModel):
+class PersonalInformation(BaseModel):
     id: Optional[int]
     name: Optional[str]
     name_kana: Optional[str]
@@ -17,7 +17,7 @@ class PersonalInformationResponse(BaseModel):
     blood_type: Optional[str]
 
     @classmethod
-    def from_db_dict(cls, db_dict: Dict[str, Any]) -> PersonalInformationResponse:
+    def from_db_dict(cls, db_dict: Dict[str, Any]) -> PersonalInformation:
         """
         データベースの結果辞書からモデルを作成
         存在しないフィールドは自動的にNoneとして扱われる
