@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.v1.endpoints import chat, health_check, items, memory, rag, text_to_sql
+from app.api.v1.endpoints import chat, english, health_check, items, memory, rag, text_to_sql
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.endpoints import recipes
 from app.core.config import settings
@@ -26,5 +26,6 @@ app.include_router(chat.router, prefix=settings.API_V1_STR)
 app.include_router(text_to_sql.router, prefix=settings.API_V1_STR)
 app.include_router(rag.router, prefix=settings.API_V1_STR)
 app.include_router(health_check.router, prefix=settings.API_V1_STR)
+app.include_router(english.router, prefix=settings.API_V1_STR)
 
 
