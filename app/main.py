@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.v1.endpoints import  english, health_check
+from app.api.v1.endpoints import  auth, english, health_check
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 
@@ -26,5 +26,6 @@ app.add_middleware(
 # app.include_router(rag.router, prefix=settings.API_V1_STR)
 app.include_router(health_check.router, prefix=settings.API_V1_STR)
 app.include_router(english.router, prefix=settings.API_V1_STR)
+app.include_router(auth.router, prefix=settings.API_V1_STR)  # 認証エンドポイントを追加
 
 

@@ -17,3 +17,8 @@ langchain-text-splitters
 langchain-postgres
 asyncpg[binary]
 tavily-python
+bcrypt
+pyjwt
+passlib
+python-multipart
+email-validator
