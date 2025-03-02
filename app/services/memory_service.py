@@ -1,6 +1,4 @@
-from langchain_openai import OpenAIEmbeddings
 from app.core.config import settings
-from langchain_postgres import PGVector
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI

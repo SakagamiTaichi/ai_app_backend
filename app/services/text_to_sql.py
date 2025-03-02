@@ -1,7 +1,4 @@
-from dataclasses import Field
-from typing import Any, Dict, List, Type
 from langchain_openai import ChatOpenAI
-from openai import BaseModel
 from app.schemas.personal_information import PersonalInformation
 from app.core.config import settings
 from langchain_core.prompts import ChatPromptTemplate

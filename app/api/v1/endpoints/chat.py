@@ -1,9 +1,6 @@
-import uuid
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.chat_service import RagChatService
-import json
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 chat_service = RagChatService()

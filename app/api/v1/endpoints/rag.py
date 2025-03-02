@@ -1,15 +1,12 @@
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
-from app.schemas.chat import ChatRequest, ChatResponse
 from app.schemas.rag import InformationRequest, InformationsResponse
-import json
 from app.services.rag_service import RagService
 
 router = APIRouter(prefix="/rag", tags=["rag"])
 rag_service = RagService()
 
 @router.post("/")
-async def rag(infromation: InformationRequest) -> str:
+async def embedding_model(infromation: InformationRequest) -> str:
     try:
         return rag_service.embedding_model(infromation.information)
     except Exception as e:

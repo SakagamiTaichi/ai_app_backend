@@ -2,7 +2,6 @@
 from pydantic import BaseModel, Field
 from typing import Any, Dict, List
 from openai import BaseModel
-from pydantic import ConfigDict
 
 from app.schemas.personal_information import PersonalInformation
 

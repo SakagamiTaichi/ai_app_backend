@@ -7,9 +7,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from supabase import create_client
-from langchain_core.messages import HumanMessage, AIMessage
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.chat_message_histories import ChatMessageHistory
 
 from app.schemas.rag import InformationResponse, InformationsResponse
 from app.schemas.recipe import RecipeHistories
