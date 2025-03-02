@@ -17,11 +17,6 @@ class Settings(BaseSettings):
     LANGCHAIN_ENDPOINT: str = ""
     LANGCHAIN_API_KEY: str = ""
     LANGCHAIN_PROJECT: str = ""
-    
-    # JWT認証用の設定を追加
-    JWT_SECRET_KEY: str = ""  # JWTのシークレットキー
-    JWT_ALGORITHM: str = "" # JWTのアルゴリズム
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # アクセストークンの有効期限（分）
 
     class Config:
         case_sensitive = True
