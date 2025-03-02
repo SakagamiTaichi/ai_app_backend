@@ -25,6 +25,7 @@ class EnglishSupabaseRepository(EnglishRepository):
             sets = [
                 ConversationSet(
                     id=UUID(record['id']),
+                    user_id=UUID(record['user_id']),
                     title=record['title'],
                     created_at=datetime.fromisoformat(record['created_at'].replace('Z', '+00:00'))
                 )

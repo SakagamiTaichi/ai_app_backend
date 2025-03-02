@@ -10,6 +10,7 @@ class ChatResponse(BaseModel):
 
 class ConversationSet(BaseModel):
     id: UUID = Field(..., description="id")
+    user_id : UUID = Field(..., description="user id")
     title: str = Field(..., description="title")
     created_at: datetime.datetime = Field(..., description="created at")
 

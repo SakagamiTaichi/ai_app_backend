@@ -97,9 +97,11 @@ class EnglishChatService:
     async def create_conversation_set(self, title: str) -> ConversationSet:
         """新しい会話セットを作成する"""
         from uuid import uuid4
-        
+
+        # TODO: ユーザIDを取得する
         conversation_set = ConversationSet(
             id=uuid4(),
+            user_id=uuid4(),
             title=title,
             created_at=datetime.now()
         )
