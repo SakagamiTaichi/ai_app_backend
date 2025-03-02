@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List
 from uuid import UUID
+from fastapi import HTTPException, status
 
 from supabase import Client
 
@@ -13,11 +14,12 @@ class EnglishSupabaseRepository(EnglishRepository):
     def __init__(self, client: Client):
         self.client = client
     
-    async def get_conversation_sets(self) -> List[ConversationSet]:
-        """会話セットの一覧を取得する"""
+    async def get_conversation_sets(self, user_id: str) -> List[ConversationSet]:
+        """特定ユーザーの会話セットの一覧を取得する"""
         try:
-            response= self.client.table('en_conversation_sets') \
+            response = self.client.table('en_conversation_sets') \
                 .select('*') \
+                .eq('user_id', user_id) \
                 .order('created_at', desc=True) \
                 .execute()
     
@@ -37,9 +39,23 @@ class EnglishSupabaseRepository(EnglishRepository):
             print(f"Error fetching conversation sets: {str(e)}")
             raise
     
-    async def get_messages(self, set_id: UUID) -> List[Message]:
-        """特定の会話セットに属するメッセージを取得する"""
+    async def get_messages(self, set_id: UUID, user_id: str) -> List[Message]:
+        """特定の会話セットに属するメッセージを取得する（アクセス権の確認あり）"""
         try:
+            # まず会話セットの所有者を確認
+            owner_check = self.client.table('en_conversation_sets') \
+                .select('user_id') \
+                .eq('id', str(set_id)) \
+                .execute()
+                
+            # 会話セットが存在しない、または所有者が異なる場合
+            if not owner_check.data or str(owner_check.data[0]['user_id']) != user_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="このリソースにアクセスする権限がありません"
+                )
+            
+            # メッセージを取得
             response = self.client.table('en_messages') \
                 .select('*') \
                 .eq('set_id', str(set_id)) \
@@ -60,6 +76,9 @@ class EnglishSupabaseRepository(EnglishRepository):
             ]
 
             return messages
+        except HTTPException:
+            # HTTPExceptionはそのまま伝播
+            raise
         except Exception as e:
             print(f"Error fetching messages: {str(e)}")
             raise
@@ -94,6 +113,7 @@ class EnglishSupabaseRepository(EnglishRepository):
             # ConversationSetオブジェクトから辞書を作成
             set_data = {
                 'id': str(conversation_set.id),
+                'user_id': str(conversation_set.user_id),
                 'title': conversation_set.title,
                 'created_at': conversation_set.created_at.isoformat()
             }

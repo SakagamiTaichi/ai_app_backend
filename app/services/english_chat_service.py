@@ -2,7 +2,7 @@ import time
 import json
 from datetime import datetime
 from typing import AsyncGenerator, Dict, List
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -86,22 +86,19 @@ class EnglishChatService:
             yield self.format_sse_message(error_message)
             yield "event: close\ndata: Stream ended with error\n\n"
 
-    async def get_conversation_sets(self) -> List[ConversationSet]:
-        """全セッションのチャット履歴を取得する"""
-        return await self.repository.get_conversation_sets()
+    async def get_conversation_sets(self, user_id: str) -> List[ConversationSet]:
+        """ユーザーの会話セットを取得する"""
+        return await self.repository.get_conversation_sets(user_id)
     
-    async def get_messages(self, set_id: UUID) -> List[Message]:
-        """会話セットのチャット履歴を取得する"""
-        return await self.repository.get_messages(set_id)
+    async def get_messages(self, set_id: UUID, user_id: str) -> List[Message]:
+        """会話セットのチャット履歴を取得する（アクセス権の確認あり）"""
+        return await self.repository.get_messages(set_id, user_id)
     
-    async def create_conversation_set(self, title: str) -> ConversationSet:
+    async def create_conversation_set(self, title: str, user_id: str) -> ConversationSet:
         """新しい会話セットを作成する"""
-        from uuid import uuid4
-
-        # TODO: ユーザIDを取得する
         conversation_set = ConversationSet(
             id=uuid4(),
-            user_id=uuid4(),
+            user_id=UUID(user_id),
             title=title,
             created_at=datetime.now()
         )
