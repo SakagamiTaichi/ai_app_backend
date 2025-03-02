@@ -19,12 +19,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(memory.router, prefix=settings.API_V1_STR)
-app.include_router(items.router, prefix=settings.API_V1_STR)
-app.include_router(recipes.router, prefix=settings.API_V1_STR)
-app.include_router(chat.router, prefix=settings.API_V1_STR)
-app.include_router(text_to_sql.router, prefix=settings.API_V1_STR)
-app.include_router(rag.router, prefix=settings.API_V1_STR)
+# app.include_router(memory.router, prefix=settings.API_V1_STR)
+# app.include_router(items.router, prefix=settings.API_V1_STR)
+# app.include_router(recipes.router, prefix=settings.API_V1_STR)
+# app.include_router(chat.router, prefix=settings.API_V1_STR)
+# app.include_router(text_to_sql.router, prefix=settings.API_V1_STR)
+# app.include_router(rag.router, prefix=settings.API_V1_STR)
 app.include_router(health_check.router, prefix=settings.API_V1_STR)
 app.include_router(english.router, prefix=settings.API_V1_STR)
 
