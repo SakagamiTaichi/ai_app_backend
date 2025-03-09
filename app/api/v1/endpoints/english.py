@@ -70,7 +70,7 @@ async def get_messages(
     
 @router.post("/test_result", response_model=MessageTestResultSummary)
 async def post_test_results(
-    request: MessageTestResultUserAnswerRequest,
+    request: List[MessageTestResultUserAnswerRequest],
     token: Annotated[str, Depends(oauth2_scheme)],
     chat_service: Annotated[EnglishChatService, Depends(get_english_chat_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
