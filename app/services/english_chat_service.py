@@ -19,7 +19,7 @@ from langchain_core.output_parsers import StrOutputParser
 
 from app.core.config import settings
 from app.repositories.english_repository import EnglishRepository
-from app.schemas.english_chat import ConversationSet, Message, MessageTestResultUserAnswerRequest
+from app.schemas.english_chat import ConversationSet, Message, MessageTestResultSummary, MessageTestResultUserAnswerRequest
 
 class EnglishChatService:
     def __init__(self, repository: EnglishRepository):
@@ -120,5 +120,13 @@ class EnglishChatService:
         
         return await self.repository.create_message(message)
     
-    async def post_test_results(self, user_id: str, request: MessageTestResultUserAnswerRequest) -> List[MessageTestResult]:
+    async def post_test_results(self, user_id: str, request: MessageTestResultUserAnswerRequest) -> MessageTestResultSummary:
+
         """テスト結果を取得する"""
+        return MessageTestResultSummary(
+            correct_count=0,
+            total_count=0,
+            correct_rate=0.0,
+            result=[],
+            last_correct_rate = None
+        )

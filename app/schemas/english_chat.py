@@ -2,7 +2,6 @@ import datetime
 from typing import List
 from uuid import UUID
 from pydantic import BaseModel, Field
-from sqlalchemy import Null
 
 class ChatRequest(BaseModel):
     message: str = Field(..., description="user input message")
@@ -53,4 +52,4 @@ class MessageTestResultSummary(BaseModel):
     correct_rate: float = Field(..., description="正解率")
     result : List[MessageTestResult] = Field(..., description="テスト結果")
     # 前回の結果
-    last_correct_rate: float | Null = Field(..., description="前回の正解率")
+    last_correct_rate: float | None = Field(..., description="前回の正解率")
