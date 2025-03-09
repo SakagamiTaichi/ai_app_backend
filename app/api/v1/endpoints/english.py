@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from app.dependencies.repositories import get_english_repository, get_auth_repository
 from app.repositories.english_repository import EnglishRepository
 from app.repositories.auth_repository import AuthRepository
-from app.schemas.english_chat import ConversationSet, Message, ConversationSetCreate, MessageCreate
+from app.schemas.english_chat import ConversationSet, Message, ConversationSetCreate, MessageCreate, MessageTestResult, MessageTestResultUserAnswerRequest
 from app.services.english_chat_service import EnglishChatService
 from app.services.auth_service import AuthService
 
@@ -67,6 +67,22 @@ async def get_messages(
         return await chat_service.get_messages(set_id, current_user.id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.post("/test_result", response_model=List[MessageTestResult])
+async def post_test_results(
+    request: MessageTestResultUserAnswerRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    chat_service: Annotated[EnglishChatService, Depends(get_english_chat_service)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)]
+) -> List[MessageTestResult]:
+    """ログインユーザーのテスト結果を取得する"""
+    try:
+        # 現在のユーザー情報を取得
+        current_user = await auth_service.get_current_user(token)
+        return await chat_service.post_test_results(current_user.id,request)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 
 @router.post("/conversation_sets", response_model=ConversationSet)
 async def create_conversation_set(
@@ -99,3 +115,4 @@ async def create_message(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
