@@ -21,7 +21,7 @@ import re
 from typing import List
 from app.core.config import settings
 from app.repositories.english_repository import EnglishRepository
-from app.schemas.english_chat import ConversationSet, Message, MessageTestResult, MessageTestResultSummary, MessageTestResultUserAnswerRequest
+from app.schemas.english_chat import ConversationSet, Message, MessageTestResult, MessageTestResultSummary, RecallTestRequestModel
 
 class EnglishChatService:
     def __init__(self, repository: EnglishRepository):
@@ -122,7 +122,7 @@ class EnglishChatService:
         
         return await self.repository.create_message(message)
     
-    async def post_test_results(self, user_id: str, request: List[MessageTestResultUserAnswerRequest]) -> MessageTestResultSummary:
+    async def post_test_results(self, user_id: str, request: RecallTestRequestModel) -> MessageTestResultSummary:
         """
         ユーザーの英語解答と正解を比較して結果を返す
         - 余分な単語には取り消し線を付ける
@@ -130,7 +130,7 @@ class EnglishChatService:
         - 類似度を計算する
         """
         result :List[MessageTestResult] = []
-        for req in request:
+        for req in request.answers:
             # ユーザーの解答と正解を取得
             user_answer = req.user_answer.strip()
             correct_answer = req.correct_answer.strip()
@@ -158,7 +158,7 @@ class EnglishChatService:
             # 結果を作成
             result.append(
                 MessageTestResult(
-                    user_anser=user_html,  # スキーマ定義のとおりuser_anserという名前
+                    user_answer=user_html,  # スキーマ定義のとおりuser_anserという名前
                     correct_answer=correct_html,
                     is_correct=is_correct,
                     similarity_to_correct=round(similarity, 2)*100
@@ -167,8 +167,6 @@ class EnglishChatService:
         
         # サマリーを作成
         summary = MessageTestResultSummary(
-            correct_count=sum(1 for r in result if r.is_correct),
-            total_count= len(result),
             # 正解率の平均
             correct_rate = sum(r.similarity_to_correct for r in result) / len(result) if len(result) else 0,
             result=result,

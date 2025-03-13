@@ -33,23 +33,21 @@ class MessageCreate(BaseModel):
     message_en: str = Field(..., description="英語でのメッセージ")
     message_ja: str = Field(..., description="日本語でのメッセージ")
 
-class MessageTestResultUserAnswerRequest(BaseModel):
+class RecallTestAnswer(BaseModel):
     user_answer: str = Field(..., description="ユーザーの解答")
     correct_answer: str = Field(..., description="英語の答案")
 
-
+class RecallTestRequestModel(BaseModel):
+    answers: List[RecallTestAnswer] = Field(..., description="テストの解答")
 
 class MessageTestResult(BaseModel):
-    user_anser: str = Field(..., description="ユーザーの解答(HTML)")
+    user_answer: str = Field(..., description="ユーザーの解答(HTML)")
     correct_answer: str = Field(..., description="英語の答案(HTML)")
     is_correct: bool = Field(..., description="正解かどうか")
     similarity_to_correct: float = Field(..., description="正解との類似度")
 
 
 class MessageTestResultSummary(BaseModel):
-    correct_count: int = Field(..., description="正解数")
-    total_count: int = Field(..., description="総問題数")
     correct_rate: float = Field(..., description="正解率")
-    result : List[MessageTestResult] = Field(..., description="テスト結果")
-    # 前回の結果
     last_correct_rate: float | None = Field(..., description="前回の正解率")
+    result : List[MessageTestResult] = Field(..., description="テスト結果")

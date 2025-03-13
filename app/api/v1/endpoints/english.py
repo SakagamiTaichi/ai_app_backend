@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from app.dependencies.repositories import get_english_repository, get_auth_repository
 from app.repositories.english_repository import EnglishRepository
 from app.repositories.auth_repository import AuthRepository
-from app.schemas.english_chat import ConversationSet, Message, ConversationSetCreate, MessageCreate, MessageTestResultSummary, MessageTestResultUserAnswerRequest
+from app.schemas.english_chat import ConversationSet, Message, ConversationSetCreate, MessageCreate, MessageTestResultSummary, RecallTestRequestModel
 from app.services.english_chat_service import EnglishChatService
 from app.services.auth_service import AuthService
 
@@ -70,7 +70,7 @@ async def get_messages(
     
 @router.post("/test_result", response_model=MessageTestResultSummary)
 async def post_test_results(
-    request: List[MessageTestResultUserAnswerRequest],
+    request: RecallTestRequestModel,
     token: Annotated[str, Depends(oauth2_scheme)],
     chat_service: Annotated[EnglishChatService, Depends(get_english_chat_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
