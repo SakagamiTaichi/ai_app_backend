@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from supabase import Client
 
 from app.repositories.english_repository import EnglishRepository
-from app.schemas.english_chat import ConversationSet, Message
+from app.schemas.english_chat import Conversation, Message
 
 class EnglishSupabaseRepository(EnglishRepository):
     """SupabaseをバックエンドとしたEnglishRepositoryの実装"""
@@ -14,10 +14,10 @@ class EnglishSupabaseRepository(EnglishRepository):
     def __init__(self, client: Client):
         self.client = client
     
-    async def get_conversation_sets(self, user_id: str) -> List[ConversationSet]:
+    async def get_conversation_sets(self, user_id: str) -> List[Conversation]:
         """特定ユーザーの会話セットの一覧を取得する"""
         try:
-            response = self.client.table('en_conversation_sets') \
+            response = self.client.table('en_conversations') \
                 .select('*') \
                 .eq('user_id', user_id) \
                 .order('created_at', desc=True) \
@@ -25,7 +25,7 @@ class EnglishSupabaseRepository(EnglishRepository):
     
             # レスポンスから履歴リストを作成
             sets = [
-                ConversationSet(
+                Conversation(
                     id=UUID(record['id']),
                     user_id=UUID(record['user_id']),
                     title=record['title'],
@@ -39,13 +39,13 @@ class EnglishSupabaseRepository(EnglishRepository):
             print(f"Error fetching conversation sets: {str(e)}")
             raise
     
-    async def get_messages(self, set_id: UUID, user_id: str) -> List[Message]:
+    async def get_messages(self, conversation_id: UUID, user_id: str) -> List[Message]:
         """特定の会話セットに属するメッセージを取得する（アクセス権の確認あり）"""
         try:
             # まず会話セットの所有者を確認
-            owner_check = self.client.table('en_conversation_sets') \
+            owner_check = self.client.table('en_conversations') \
                 .select('user_id') \
-                .eq('id', str(set_id)) \
+                .eq('id', str(conversation_id)) \
                 .execute()
                 
             # 会話セットが存在しない、または所有者が異なる場合
@@ -58,14 +58,14 @@ class EnglishSupabaseRepository(EnglishRepository):
             # メッセージを取得
             response = self.client.table('en_messages') \
                 .select('*') \
-                .eq('set_id', str(set_id)) \
+                .eq('conversation_id', str(conversation_id)) \
                 .order('message_order') \
                 .execute()
     
             # レスポンスからメッセージリストを作成
             messages = [
                 Message(
-                    set_id=UUID(record['set_id']),
+                    conversation_id=UUID(record['conversation_id']),
                     message_order=record['message_order'],
                     speaker_number=record['speaker_number'],
                     message_en=record['message_en'],
@@ -88,7 +88,7 @@ class EnglishSupabaseRepository(EnglishRepository):
         try:
             # Messageオブジェクトから辞書を作成
             message_data = {
-                'set_id': str(message.set_id),
+                'conversation_id': str(message.conversation_id),
                 'message_order': message.message_order,
                 'speaker_number': message.speaker_number,
                 'message_en': message.message_en,
@@ -107,7 +107,7 @@ class EnglishSupabaseRepository(EnglishRepository):
             print(f"Error creating message: {str(e)}")
             raise
     
-    async def create_conversation_set(self, conversation_set: ConversationSet) -> ConversationSet:
+    async def create_conversation_set(self, conversation_set: Conversation) -> Conversation:
         """会話セットを作成する"""
         try:
             # ConversationSetオブジェクトから辞書を作成
@@ -119,7 +119,7 @@ class EnglishSupabaseRepository(EnglishRepository):
             }
             
             # データを挿入
-            response = self.client.table('en_conversation_sets').insert(set_data).execute()
+            response = self.client.table('en_conversations').insert(set_data).execute()
             
             if not response.data:
                 raise Exception("Failed to create conversation set")

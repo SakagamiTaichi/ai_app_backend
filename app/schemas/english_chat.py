@@ -9,7 +9,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     content: str = Field(..., description="AI response")
 
-class ConversationSet(BaseModel):
+class Conversation(BaseModel):
     id: UUID = Field(..., description="id")
     user_id : UUID = Field(..., description="user id")
     title: str = Field(..., description="title")
@@ -19,7 +19,7 @@ class ConversationSetCreate(BaseModel):
     title: str = Field(..., description="会話セットのタイトル")
 
 class Message(BaseModel):
-    set_id: UUID = Field(..., description="set id")
+    conversation_id: UUID = Field(..., description="set id")
     message_order: int = Field(..., description="message order")
     speaker_number: int = Field(..., description="speaker number")
     message_en: str = Field(..., description="message in english")
@@ -27,7 +27,7 @@ class Message(BaseModel):
     created_at: datetime.datetime = Field(..., description="created at")
 
 class MessageCreate(BaseModel):
-    set_id: UUID = Field(..., description="会話セットID")
+    conversation_id: UUID = Field(..., description="会話セットID")
     message_order: int = Field(..., description="メッセージの順序")
     speaker_number: int = Field(..., description="話者番号")
     message_en: str = Field(..., description="英語でのメッセージ")
@@ -45,9 +45,12 @@ class MessageTestResult(BaseModel):
     correct_answer: str = Field(..., description="英語の答案(HTML)")
     is_correct: bool = Field(..., description="正解かどうか")
     similarity_to_correct: float = Field(..., description="正解との類似度")
+    last_similarity_to_correct: float | None = Field(..., description="前回の正解との類似度")
 
 
 class MessageTestResultSummary(BaseModel):
     correct_rate: float = Field(..., description="正解率")
     last_correct_rate: float | None = Field(..., description="前回の正解率")
     result : List[MessageTestResult] = Field(..., description="テスト結果")
+
+

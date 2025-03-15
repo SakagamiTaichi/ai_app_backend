@@ -21,7 +21,7 @@ import re
 from typing import List
 from app.core.config import settings
 from app.repositories.english_repository import EnglishRepository
-from app.schemas.english_chat import ConversationSet, Message, MessageTestResult, MessageTestResultSummary, RecallTestRequestModel
+from app.schemas.english_chat import Conversation, Message, MessageTestResult, MessageTestResultSummary, RecallTestRequestModel
 
 class EnglishChatService:
     def __init__(self, repository: EnglishRepository):
@@ -88,17 +88,17 @@ class EnglishChatService:
             yield self.format_sse_message(error_message)
             yield "event: close\ndata: Stream ended with error\n\n"
 
-    async def get_conversation_sets(self, user_id: str) -> List[ConversationSet]:
+    async def get_conversation_sets(self, user_id: str) -> List[Conversation]:
         """ユーザーの会話セットを取得する"""
         return await self.repository.get_conversation_sets(user_id)
     
-    async def get_messages(self, set_id: UUID, user_id: str) -> List[Message]:
+    async def get_messages(self, conversation_id: UUID, user_id: str) -> List[Message]:
         """会話セットのチャット履歴を取得する（アクセス権の確認あり）"""
-        return await self.repository.get_messages(set_id, user_id)
+        return await self.repository.get_messages(conversation_id, user_id)
     
-    async def create_conversation_set(self, title: str, user_id: str) -> ConversationSet:
+    async def create_conversation_set(self, title: str, user_id: str) -> Conversation:
         """新しい会話セットを作成する"""
-        conversation_set = ConversationSet(
+        conversation_set = Conversation(
             id=uuid4(),
             user_id=UUID(user_id),
             title=title,
@@ -107,12 +107,12 @@ class EnglishChatService:
         
         return await self.repository.create_conversation_set(conversation_set)
     
-    async def create_message(self, set_id: UUID, message_order: int, 
+    async def create_message(self, conversation_id: UUID, message_order: int, 
                              speaker_number: int, message_en: str, 
                              message_ja: str) -> Message:
         """新しいメッセージを作成する"""
         message = Message(
-            set_id=set_id,
+            conversation_id=conversation_id,
             message_order=message_order,
             speaker_number=speaker_number,
             message_en=message_en,
@@ -161,7 +161,8 @@ class EnglishChatService:
                     user_answer=user_html,  # スキーマ定義のとおりuser_anserという名前
                     correct_answer=correct_html,
                     is_correct=is_correct,
-                    similarity_to_correct=round(similarity, 2)*100
+                    similarity_to_correct=round(similarity, 2)*100,
+                    last_similarity_to_correct=0.0  # 固定値
                 )
             )
         
@@ -172,6 +173,10 @@ class EnglishChatService:
             result=result,
             last_correct_rate=0.0  # 固定値
         )
+
+        
+
+
     
         return summary
 
