@@ -34,13 +34,15 @@ class MessageCreate(BaseModel):
     message_ja: str = Field(..., description="日本語でのメッセージ")
 
 class RecallTestAnswer(BaseModel):
+    message_order: int = Field(..., description="メッセージの順序")
     user_answer: str = Field(..., description="ユーザーの解答")
-    correct_answer: str = Field(..., description="英語の答案")
 
 class RecallTestRequestModel(BaseModel):
+    conversation_id: UUID = Field(..., description="会話セットID")
     answers: List[RecallTestAnswer] = Field(..., description="テストの解答")
 
 class MessageTestResult(BaseModel):
+    message_order: int = Field(..., description="メッセージの順序")
     user_answer: str = Field(..., description="ユーザーの解答(HTML)")
     correct_answer: str = Field(..., description="英語の答案(HTML)")
     is_correct: bool = Field(..., description="正解かどうか")

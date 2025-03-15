@@ -16,10 +16,10 @@ from langchain_core.prompts.chat import (
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.output_parsers import StrOutputParser
-import difflib
 import re
 from typing import List
 from app.core.config import settings
+from app.entities.test_result import MessageScore, TestResult
 from app.repositories.english_repository import EnglishRepository
 from app.schemas.english_chat import Conversation, Message, MessageTestResult, MessageTestResultSummary, RecallTestRequestModel
 
@@ -121,70 +121,11 @@ class EnglishChatService:
         )
         
         return await self.repository.create_message(message)
-    
-    async def post_test_results(self, user_id: str, request: RecallTestRequestModel) -> MessageTestResultSummary:
-        """
-        ユーザーの英語解答と正解を比較して結果を返す
-        - 余分な単語には取り消し線を付ける
-        - 不足している単語は赤文字で表示する
-        - 類似度を計算する
-        """
-        result :List[MessageTestResult] = []
-        for req in request.answers:
-            # ユーザーの解答と正解を取得
-            user_answer = req.user_answer.strip()
-            correct_answer = req.correct_answer.strip()
-        
-            # 単語とトークン(句読点など)に分割
-            def tokenize(text : str) -> List[str]:
-                return re.findall(r'\b[\w\']+\b|[.,;!?]|\S', text)
-            
-            user_tokens = tokenize(user_answer)
-            correct_tokens = tokenize(correct_answer)
-        
-            # トークンレベルでの差分を取得
-            matcher = difflib.SequenceMatcher(None, user_tokens, correct_tokens)
-            diff_blocks = matcher.get_opcodes()
-        
-            # HTMLにマークアップ
-            user_html, correct_html = self._generate_diff_html(diff_blocks, user_tokens, correct_tokens)
-        
-            # 類似度を計算
-            similarity = matcher.ratio()
-        
-            # 正解かどうかを判定（類似度が0.9以上なら正解）
-            is_correct = similarity >= 0.9
-        
-            # 結果を作成
-            result.append(
-                MessageTestResult(
-                    user_answer=user_html,  # スキーマ定義のとおりuser_anserという名前
-                    correct_answer=correct_html,
-                    is_correct=is_correct,
-                    similarity_to_correct=round(similarity, 2)*100,
-                    last_similarity_to_correct=0.0  # 固定値
-                )
-            )
-        
-        # サマリーを作成
-        summary = MessageTestResultSummary(
-            # 正解率の平均
-            correct_rate = sum(r.similarity_to_correct for r in result) / len(result) if len(result) else 0,
-            result=result,
-            last_correct_rate=0.0  # 固定値
-        )
-
-        
-
-
-    
-        return summary
-
-    def _generate_diff_html(self, diff_blocks : List, user_tokens : List, correct_tokens :List):
+    def _generate_diff_html(self, user_tokens : List[str], correct_tokens :List[str]):
         """差分に基づいてHTMLマークアップを生成する"""
+        diff_blocks = MessageScore.get_diff_blocks(user_tokens, correct_tokens)
         user_html = []
         correct_html = []
-    
         for tag, i1, i2, j1, j2 in diff_blocks:
             if tag == 'equal':
                 # 両方に存在するトークン
@@ -201,13 +142,13 @@ class EnglishChatService:
                 for k in range(j1, j2):
                     correct_html.append(f'<span style="color:red">{correct_tokens[k]}</span>')
             elif tag == 'replace':
-                # 置換されたトークン
-                for k in range(i1, i2):
-                    user_html.append(f'<del>{user_tokens[k]}</del>')
-                for k in range(j1, j2):
-                    correct_html.append(f'<span style="color:red">{correct_tokens[k]}</span>')
-    
-        # トークンを連結する際に適切なスペースを入れる
+                    # 置換されたトークン
+                    for k in range(i1, i2):
+                        user_html.append(f'<del>{user_tokens[k]}</del>')
+                    for k in range(j1, j2):
+                        correct_html.append(f'<span style="color:red">{correct_tokens[k]}</span>')
+        
+            # トークンを連結する際に適切なスペースを入れる
         def join_tokens(tokens :List[str]) -> str:
             result = ""
             for i, token in enumerate(tokens):
@@ -217,4 +158,71 @@ class EnglishChatService:
                 result += token
             return result
     
-        return join_tokens(user_html), join_tokens(correct_html)
+        return join_tokens(user_html), join_tokens(correct_html)    
+    async def post_test_results(self, user_id: str, request: RecallTestRequestModel) -> MessageTestResultSummary:
+        """テスト結果を処理し、データベースに保存する"""
+        try:
+            # リクエストの会話IDから会話セットを取得
+            conversation = await self.repository.get_messages(request.conversation_id, user_id)
+
+            # 前回のテスト結果を取得
+            last_test_result = await self.repository.get_latest_test_result(request.conversation_id)
+
+            # 前回のテスト結果から今回のテスト番号を取得
+            test_number = 1
+            if last_test_result:
+                test_number = last_test_result.test_number + 1
+
+            # 取得した会話セットとユーザーの会話セットのorderが完全一致するかを確認。しない場合はエラーを返す
+            if len(conversation) != len(request.answers):
+                raise ValueError("The number of messages in the conversation set and the number of answers do not match")
+            
+            # 取得してきた会話セットとリクエストのメッセージからanswersを作成
+            answers = []
+            for message in conversation:
+                answers.append({
+                'message_order': message.message_order,
+                'user_answer': request.answers[message.message_order - 1].user_answer,
+                'correct_answer': message.message_en
+            })
+            
+            # ドメインエンティティを作成
+            test_result = TestResult.create_from_answers(
+                conversation_id=request.conversation_id,
+                test_number=test_number,
+                answers=answers
+            )
+            
+            # テスト結果をデータベースに保存
+            saved_result = await self.repository.save_test_result(test_result)
+            
+            result_items = []
+            for score in test_result.message_scores:
+                # ユーザーの解答と正解をHTMLとしてフォーマット
+                user_html, correct_html =  self._generate_diff_html( score.get_tokenized_user_answer, score.get_tokenized_correct_answer)
+                
+                # 前回のスコアを検索
+                last_score = None
+                if last_test_result:
+                    last_score = last_test_result.message_scores[score.message_order - 1].score
+                
+                result_items.append(
+                    MessageTestResult(
+                        message_order=score.message_order,
+                        user_answer=user_html,
+                        correct_answer=correct_html,
+                        is_correct=score.is_correct,
+                        similarity_to_correct=score.score,
+                        last_similarity_to_correct=last_score
+                    )
+                )
+            
+            return MessageTestResultSummary(
+                correct_rate=test_result.overall_score,
+                last_correct_rate=last_test_result.overall_score if last_test_result else None,
+                result=result_items
+            )
+            
+        except Exception as e:
+            print(f"Error processing test results: {str(e)}")
+            raise

@@ -1,10 +1,11 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from fastapi import HTTPException, status
 
 from supabase import Client
 
+from app.entities.test_result import MessageScore, TestResult
 from app.repositories.english_repository import EnglishRepository
 from app.schemas.english_chat import Conversation, Message
 
@@ -128,3 +129,94 @@ class EnglishSupabaseRepository(EnglishRepository):
         except Exception as e:
             print(f"Error creating conversation set: {str(e)}")
             raise
+
+    async def save_test_result(self, test_result: TestResult) -> TestResult:
+        """テスト結果をデータベースに保存する"""
+        try:
+            # 会話テストスコアを保存
+            conversation_score_data = {
+                'conversation_id': str(test_result.conversation_id),
+                'test_number': test_result.test_number,
+                'test_score': test_result.overall_score,
+                'is_pass': test_result.is_passing,
+                'created_at': test_result.created_at.isoformat()
+            }
+            
+            score_response = self.client.table('en_conversation_test_scores').insert(conversation_score_data).execute()
+            
+            # メッセージごとのスコアを保存
+            if test_result.message_scores:
+                message_score_data = [
+                    {
+                        'conversation_id': str(test_result.conversation_id),
+                        'test_number': test_result.test_number,
+                        'message_order': score.message_order,
+                        'score': score.score
+                    }
+                    for score in test_result.message_scores
+                ]
+                
+                self.client.table('en_message_test_scores').insert(message_score_data).execute()
+            
+            return test_result
+            
+        except Exception as e:
+            print(f"Error saving test results: {str(e)}")
+            raise
+    
+    async def get_latest_test_result(self, conversation_id: UUID) -> Optional[TestResult]:
+        """指定された会話の最新のテスト結果を取得する"""
+        try:
+            # 最新のテスト結果を取得
+            response = self.client.table('en_conversation_test_scores') \
+                .select('*') \
+                .eq('conversation_id', str(conversation_id)) \
+                .order('test_number', desc=True) \
+                .limit(1) \
+                .execute()
+            
+            if not response.data:
+                return None
+            
+            last_test = response.data[0]
+            test_number = last_test['test_number']
+            
+            # 対応するメッセージスコアを取得
+            msg_response = self.client.table('en_message_test_scores') \
+                .select('*') \
+                .eq('conversation_id', str(conversation_id)) \
+                .eq('test_number', test_number) \
+                .execute()
+            
+            # メッセージスコアのリストを作成
+            message_scores = []
+            for item in msg_response.data:
+                # メッセージの詳細を取得（正解内容など）
+                message_response = self.client.table('en_messages') \
+                    .select('*') \
+                    .eq('conversation_id', str(conversation_id)) \
+                    .eq('message_order', item['message_order']) \
+                    .limit(1) \
+                    .execute()
+                
+                if message_response.data:
+                    msg = message_response.data[0]
+                    score = MessageScore(
+                        message_order=item['message_order'],
+                        score=item['score'],
+                        is_correct=item['score'] >= 90.0,
+                        user_answer="",  # データベースには保存されていない
+                        correct_answer=msg['message_en']
+                    )
+                    message_scores.append(score)
+            
+            # TestResultエンティティを作成して返す
+            return TestResult(
+                conversation_id=UUID(last_test['conversation_id']),
+                test_number=last_test['test_number'],
+                message_scores=message_scores,
+                created_at=datetime.fromisoformat(last_test['created_at'].replace('Z', '+00:00'))
+            )
+        except Exception as e:
+            print(f"Error fetching last test result: {str(e)}")
+            return None

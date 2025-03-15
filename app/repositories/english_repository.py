@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
+from app.entities.test_result import TestResult
 from app.schemas.english_chat import Conversation, Message
 
 class EnglishRepository(ABC):
@@ -26,3 +27,14 @@ class EnglishRepository(ABC):
     async def create_conversation_set(self, conversation_set: Conversation) -> Conversation:
         """会話セットを作成する"""
         pass
+
+    @abstractmethod
+    async def save_test_result(self, test_result: TestResult) -> TestResult:
+        """テスト結果をデータベースに保存する"""
+        pass
+    
+    @abstractmethod
+    async def get_latest_test_result(self, conversation_id: UUID) -> Optional[TestResult]:
+        """指定された会話の最新のテスト結果を取得する"""
+        pass
+    
