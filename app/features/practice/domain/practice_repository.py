@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 from uuid import UUID
 
-from app.entities.test_result import TestResult
+from app.features.practice.domain.test_result import TestResult
 from app.features.practice.model.practice import Conversation, Message
 
 class PracticeRepository(ABC):
