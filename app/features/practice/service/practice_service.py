@@ -19,8 +19,8 @@ from langchain_core.output_parsers import StrOutputParser
 import re
 from typing import List
 from app.core.config import settings
-from app.entities.test_result import MessageScore, TestResult
 from app.features.practice.domain.practice_repository import PracticeRepository
+from app.features.practice.domain.test_result import MessageScore, TestResult
 from app.features.practice.model.practice import Conversation, Message, MessageTestResult, MessageTestResultSummary, RecallTestRequestModel
 
 

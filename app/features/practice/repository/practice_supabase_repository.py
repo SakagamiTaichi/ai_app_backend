@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 
 from supabase import Client
 
-from app.entities.test_result import MessageScore, TestResult
+from app.features.practice.domain.test_result import MessageScore, TestResult
 from app.features.practice.domain.practice_repository import PracticeRepository
 from app.features.practice.model.practice import Conversation, Message
 
