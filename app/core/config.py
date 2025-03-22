@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     LANGCHAIN_ENDPOINT: str = ""
     LANGCHAIN_API_KEY: str = ""
     LANGCHAIN_PROJECT: str = ""
+    ENVIRONMENT: str = ""
 
     class Config:
         case_sensitive = True
