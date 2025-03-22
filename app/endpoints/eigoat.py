@@ -3,22 +3,21 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordBearer
-
 from app.dependencies.repositories import get_english_repository, get_auth_repository
-from app.repositories.english_repository import EnglishRepository
-from app.repositories.auth_repository import AuthRepository
-from app.schemas.english_chat import Conversation, Message, ConversationSetCreate, MessageCreate, MessageTestResultSummary, RecallTestRequestModel
-from app.services.english_chat_service import EnglishChatService
-from app.services.auth_service import AuthService
+from app.features.practice.domain.practice_repository import PracticeRepository
+from app.features.auth.domain.auth_repository import AuthRepository
+from app.features.auth.service.auth_service import AuthService
+from app.features.practice.model.practice import Conversation, ConversationSetCreate, Message, MessageCreate, MessageTestResultSummary, RecallTestRequestModel
+from app.features.practice.service.practice_service import PracticeService
 
-router = APIRouter(prefix="/english", tags=["english"])
+router = APIRouter(prefix="/eigoat", tags=["eigoat"])
 
 # OAuth2のパスワードベアラースキーム
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/api/v1/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/auth/token")
 
 # サービスのインスタンス作成に依存性注入を使用
-def get_english_chat_service(repository: Annotated[EnglishRepository, Depends(get_english_repository)]) -> EnglishChatService:
-    return EnglishChatService(repository)
+def get_english_chat_service(repository: Annotated[PracticeRepository, Depends(get_english_repository)]) -> PracticeService:
+    return PracticeService(repository)
 
 def get_auth_service(repository: Annotated[AuthRepository, Depends(get_auth_repository)]) -> AuthService:
     return AuthService(repository)
@@ -27,7 +26,7 @@ def get_auth_service(repository: Annotated[AuthRepository, Depends(get_auth_repo
 async def chat_stream(
     message: str,
     session_id: str,
-    chat_service: Annotated[EnglishChatService, Depends(get_english_chat_service)]
+    chat_service: Annotated[PracticeService, Depends(get_english_chat_service)]
 ) -> StreamingResponse:
     """チャットのストリーミングレスポンスを取得する"""
     try:
@@ -41,7 +40,7 @@ async def chat_stream(
 @router.get("/conversation_sets", response_model=List[Conversation])
 async def get_conversation_sets(
     token: Annotated[str, Depends(oauth2_scheme)],
-    chat_service: Annotated[EnglishChatService, Depends(get_english_chat_service)],
+    chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
 ) -> List[Conversation]:
     """ログインユーザーの会話セットの一覧を取得する"""
@@ -57,7 +56,7 @@ async def get_conversation_sets(
 async def get_messages(
     conversation_id: UUID,
     token: Annotated[str, Depends(oauth2_scheme)],
-    chat_service: Annotated[EnglishChatService, Depends(get_english_chat_service)],
+    chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
 ) -> List[Message]:
     """特定の会話セットに属するメッセージを取得する"""
@@ -72,7 +71,7 @@ async def get_messages(
 async def post_test_results(
     request: RecallTestRequestModel,
     token: Annotated[str, Depends(oauth2_scheme)],
-    chat_service: Annotated[EnglishChatService, Depends(get_english_chat_service)],
+    chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
 ) -> MessageTestResultSummary:
     """ログインユーザーのテスト結果を取得する"""
@@ -88,7 +87,7 @@ async def post_test_results(
 async def create_conversation_set(
     data: ConversationSetCreate,
     token: Annotated[str, Depends(oauth2_scheme)],
-    chat_service: Annotated[EnglishChatService, Depends(get_english_chat_service)],
+    chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
 ) -> Conversation:
     """新しい会話セットを作成する"""
@@ -102,7 +101,7 @@ async def create_conversation_set(
 @router.post("/message", response_model=Message)
 async def create_message(
     data: MessageCreate,
-    chat_service: Annotated[EnglishChatService, Depends(get_english_chat_service)]
+    chat_service: Annotated[PracticeService, Depends(get_english_chat_service)]
 ) -> Message:
     """新しいメッセージを作成する"""
     try:

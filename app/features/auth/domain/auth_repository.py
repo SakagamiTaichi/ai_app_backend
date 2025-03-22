@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from app.schemas.auth import Token, UserResponse
+from app.features.auth.model.auth import Token, UserResponse
 
 class AuthRepository(ABC):
     """認証機能のリポジトリインターフェース"""

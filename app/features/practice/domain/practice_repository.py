@@ -3,9 +3,9 @@ from typing import List, Optional
 from uuid import UUID
 
 from app.entities.test_result import TestResult
-from app.schemas.english_chat import Conversation, Message
+from app.features.practice.model.practice import Conversation, Message
 
-class EnglishRepository(ABC):
+class PracticeRepository(ABC):
     """英語学習関連データのリポジトリインターフェース"""
     
     @abstractmethod

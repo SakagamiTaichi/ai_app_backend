@@ -20,11 +20,12 @@ import re
 from typing import List
 from app.core.config import settings
 from app.entities.test_result import MessageScore, TestResult
-from app.repositories.english_repository import EnglishRepository
-from app.schemas.english_chat import Conversation, Message, MessageTestResult, MessageTestResultSummary, RecallTestRequestModel
+from app.features.practice.domain.practice_repository import PracticeRepository
+from app.features.practice.model.practice import Conversation, Message, MessageTestResult, MessageTestResultSummary, RecallTestRequestModel
 
-class EnglishChatService:
-    def __init__(self, repository: EnglishRepository):
+
+class PracticeService:
+    def __init__(self, repository: PracticeRepository):
         self.llm = ChatOpenAI(
             model=settings.OPENAI_MODEL,    
             temperature=settings.TEMPERATURE,

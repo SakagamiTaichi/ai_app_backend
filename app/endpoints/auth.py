@@ -3,15 +3,15 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from app.dependencies.repositories import get_auth_repository
-from app.repositories.auth_repository import AuthRepository
-from app.schemas.auth import Token, UserCreate, UserLogin, UserResponse
-from app.services.auth_service import AuthService
+from app.features.auth.domain.auth_repository import AuthRepository
+from app.features.auth.model.auth import Token, UserCreate, UserLogin, UserResponse
+from app.features.auth.service.auth_service import AuthService
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # OAuth2のパスワードベアラースキーム
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/api/v1/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/auth/token")
 
 # サービスのインスタンス作成に依存性注入を使用
 def get_auth_service(repository: Annotated[AuthRepository, Depends(get_auth_repository)]) -> AuthService:

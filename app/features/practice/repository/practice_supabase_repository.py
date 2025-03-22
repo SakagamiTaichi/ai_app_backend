@@ -6,10 +6,10 @@ from fastapi import HTTPException, status
 from supabase import Client
 
 from app.entities.test_result import MessageScore, TestResult
-from app.repositories.english_repository import EnglishRepository
-from app.schemas.english_chat import Conversation, Message
+from app.features.practice.domain.practice_repository import PracticeRepository
+from app.features.practice.model.practice import Conversation, Message
 
-class EnglishSupabaseRepository(EnglishRepository):
+class PracticeSupabaseRepository(PracticeRepository):
     """SupabaseをバックエンドとしたEnglishRepositoryの実装"""
     
     def __init__(self, client: Client):

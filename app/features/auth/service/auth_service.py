@@ -1,6 +1,7 @@
-from app.repositories.auth_repository import AuthRepository
-from app.schemas.auth import Token, UserResponse
 from fastapi import HTTPException, status
+
+from app.features.auth.domain.auth_repository import AuthRepository
+from app.features.auth.model.auth import Token, UserResponse
 
 class AuthService:
     """認証サービスクラス"""
