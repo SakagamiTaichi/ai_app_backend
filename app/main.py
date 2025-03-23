@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 from app.core.exception.app_exception import setup_exception_handlers
-from app.features.health_check import  health_check
+from app.endpoint.health_check import  health_check
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from app.core.config import settings
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
-from app.features.auth.endpoint import auth
-from app.features.practice.endpoint import practice
+from app.endpoint.auth import auth
+from app.endpoint.practice import practice
 
 if settings.ENVIRONMENT == "production":
     # 本番環境用の設定
