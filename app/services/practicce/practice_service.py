@@ -19,9 +19,10 @@ from langchain_core.output_parsers import StrOutputParser
 import re
 from typing import List
 from app.core.config import settings
-from app.features.practice.domain.practice_repository import PracticeRepository
-from app.features.practice.domain.test_result import MessageScore, TestResult
-from app.features.practice.model.practice import Conversation, Message, MessageTestResult, MessageTestResultSummary, RecallTestRequestModel
+from app.domain.practice.conversation import ConversationEntity
+from app.domain.practice.practice_repository import PracticeRepository
+from app.domain.practice.test_result import MessageScore, TestResult
+from app.model.practice.practice import Conversation, ConversationResponse, Message, MessageTestResult, MessageTestResultSummary, RecallTestRequest
 
 
 class PracticeService:
@@ -89,12 +90,26 @@ class PracticeService:
             yield self.format_sse_message(error_message)
             yield "event: close\ndata: Stream ended with error\n\n"
 
-    async def get_conversation_sets(self, user_id: str) -> List[Conversation]:
+    async def get_conversation_sets(self, user_id: str) -> ConversationResponse:
         """ユーザーの会話セットを取得する"""
-        return await self.repository.get_conversation_sets(user_id)
+        
+        entities: List[ConversationEntity]= await self.repository.get_conversation_sets(user_id)
+        
+        conversations = [
+        Conversation(
+            id=entity.id,
+            user_id=entity.user_id,
+            title=entity.title,
+            created_at=entity.created_at
+        )
+        for entity in entities
+    ]
+        # ConversationResponseを作成して返す
+        return ConversationResponse(conversation=conversations)
+
     
     async def get_messages(self, conversation_id: UUID, user_id: str) -> List[Message]:
-        """会話セットのチャット履歴を取得する（アクセス権の確認あり）"""
+        """会話セットのメッセージ一覧を取得する"""
         return await self.repository.get_messages(conversation_id, user_id)
     
     async def create_conversation_set(self, title: str, user_id: str) -> Conversation:
@@ -120,8 +135,20 @@ class PracticeService:
             message_ja=message_ja,
             created_at=datetime.now()
         )
-        
+
         return await self.repository.create_message(message)
+    
+    # トークンを連結する際に適切なスペースを入れる
+    @staticmethod
+    def join_tokens(tokens :List[str]) -> str:
+        result = ""
+        for i, token in enumerate(tokens):
+            # 句読点の前にはスペースを入れない
+            if i > 0 and not re.match(r'[.,;!?]', token):
+                result += " "
+            result += token
+        return result
+
     def _generate_diff_html(self, user_tokens : List[str], correct_tokens :List[str]):
         """差分に基づいてHTMLマークアップを生成する"""
         diff_blocks = MessageScore.get_diff_blocks(user_tokens, correct_tokens)
@@ -148,19 +175,9 @@ class PracticeService:
                         user_html.append(f'<del>{user_tokens[k]}</del>')
                     for k in range(j1, j2):
                         correct_html.append(f'<span style="color:red">{correct_tokens[k]}</span>')
-        
-            # トークンを連結する際に適切なスペースを入れる
-        def join_tokens(tokens :List[str]) -> str:
-            result = ""
-            for i, token in enumerate(tokens):
-                # 句読点の前にはスペースを入れない
-                if i > 0 and not re.match(r'[.,;!?]', token):
-                    result += " "
-                result += token
-            return result
+        return self.join_tokens(user_html), self.join_tokens(correct_html)
     
-        return join_tokens(user_html), join_tokens(correct_html)    
-    async def post_test_results(self, user_id: str, request: RecallTestRequestModel) -> MessageTestResultSummary:
+    async def post_test_results(self, user_id: str, request: RecallTestRequest) -> MessageTestResultSummary:
         """テスト結果を処理し、データベースに保存する"""
         try:
             # リクエストの会話IDから会話セットを取得
@@ -176,7 +193,7 @@ class PracticeService:
 
             # 取得した会話セットとユーザーの会話セットのorderが完全一致するかを確認。しない場合はエラーを返す
             if len(conversation) != len(request.answers):
-                raise ValueError("The number of messages in the conversation set and the number of answers do not match")
+                raise ValueError("会話セットのメッセージ数と回答数が一致しません")
             
             # 取得してきた会話セットとリクエストのメッセージからanswersを作成
             answers = []
@@ -188,7 +205,7 @@ class PracticeService:
             })
             
             # ドメインエンティティを作成
-            test_result = TestResult.create_from_answers(
+            test_result = TestResult.factory(
                 conversation_id=request.conversation_id,
                 test_number=test_number,
                 answers=answers
@@ -200,7 +217,7 @@ class PracticeService:
             result_items = []
             for score in test_result.message_scores:
                 # ユーザーの解答と正解をHTMLとしてフォーマット
-                user_html, correct_html =  self._generate_diff_html( score.get_tokenized_user_answer, score.get_tokenized_correct_answer)
+                user_html, correct_html =  self._generate_diff_html( score.get_tokenized_user_answer(), score.get_tokenized_correct_answer())
                 
                 # 前回のスコアを検索
                 last_score = None
@@ -219,8 +236,8 @@ class PracticeService:
                 )
             
             return MessageTestResultSummary(
-                correct_rate=test_result.overall_score,
-                last_correct_rate=last_test_result.overall_score if last_test_result else None,
+                correct_rate=test_result.overall_score(),
+                last_correct_rate=last_test_result.overall_score() if last_test_result else None,
                 result=result_items
             )
             

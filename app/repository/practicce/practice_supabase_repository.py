@@ -5,9 +5,10 @@ from fastapi import HTTPException, status
 
 from supabase import Client
 
-from app.features.practice.domain.test_result import MessageScore, TestResult
-from app.features.practice.domain.practice_repository import PracticeRepository
-from app.features.practice.model.practice import Conversation, Message
+from app.domain.practice.conversation import ConversationEntity
+from app.domain.practice.test_result import MessageScore, TestResult
+from app.domain.practice.practice_repository import PracticeRepository
+from app.model.practice.practice import Conversation, Message
 
 class PracticeSupabaseRepository(PracticeRepository):
     """SupabaseをバックエンドとしたEnglishRepositoryの実装"""
@@ -15,7 +16,7 @@ class PracticeSupabaseRepository(PracticeRepository):
     def __init__(self, client: Client):
         self.client = client
     
-    async def get_conversation_sets(self, user_id: str) -> List[Conversation]:
+    async def get_conversation_sets(self, user_id: str) -> List[ConversationEntity]:
         """特定ユーザーの会話セットの一覧を取得する"""
         try:
             response = self.client.table('en_conversations') \
@@ -26,7 +27,7 @@ class PracticeSupabaseRepository(PracticeRepository):
     
             # レスポンスから履歴リストを作成
             sets = [
-                Conversation(
+                ConversationEntity(
                     id=UUID(record['id']),
                     user_id=UUID(record['user_id']),
                     title=record['title'],

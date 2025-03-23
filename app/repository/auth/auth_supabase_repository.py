@@ -1,6 +1,8 @@
 from supabase import Client
-from app.features.auth.domain.auth_repository import AuthRepository
-from app.features.auth.model.auth import Token, UserResponse
+from app.core.exception.app_exception import InternalServerError
+from app.domain.auth.auth_repository import AuthRepository
+from app.exception.auth.auth_exception import AuthenticationException, FailedToCreateUserException
+from app.model.auth.auth import Token, UserResponse
 from fastapi import HTTPException, status
 
 class AuthSupabaseRepository(AuthRepository):
@@ -21,16 +23,10 @@ class AuthSupabaseRepository(AuthRepository):
             # ユーザー情報を返す
             user_data = response.user
             if not user_data:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="ユーザー登録に失敗しました"
-                )
+                raise FailedToCreateUserException()
             
             if not user_data.email:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="ユーザー登録に失敗しました"
-                ) 
+                raise FailedToCreateUserException()
             
             return UserResponse(
                 id=user_data.id,
@@ -39,11 +35,7 @@ class AuthSupabaseRepository(AuthRepository):
             )
             
         except Exception as e:
-            # エラーハンドリング（既に存在するメールアドレスなど）
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"ユーザー登録エラー: {str(e)}"
-            )
+            raise InternalServerError()
     
     async def signin(self, email: str, password: str) -> Token:
         """ユーザーをサインインさせる"""
@@ -57,10 +49,7 @@ class AuthSupabaseRepository(AuthRepository):
             
             session = response.session
             if not session:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="認証に失敗しました"
-                )
+                raise AuthenticationException()
             
             # トークン情報を返す
             return Token(
@@ -70,11 +59,7 @@ class AuthSupabaseRepository(AuthRepository):
             )
             
         except Exception as e:
-            # エラーハンドリング
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"認証エラー: {str(e)}"
-            )
+            raise InternalServerError()
     
     async def refresh_token(self, refresh_token: str) -> Token:
         """リフレッシュトークンを使用して新しいアクセストークンを取得する"""

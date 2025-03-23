@@ -15,6 +15,9 @@ class Conversation(BaseModel):
     title: str = Field(..., description="title")
     created_at: datetime.datetime = Field(..., description="created at")
 
+class ConversationResponse(BaseModel):
+    conversation: List[Conversation] = Field(..., description="conversation")
+
 class ConversationSetCreate(BaseModel):
     title: str = Field(..., description="会話セットのタイトル")
 
@@ -37,7 +40,7 @@ class RecallTestAnswer(BaseModel):
     message_order: int = Field(..., description="メッセージの順序")
     user_answer: str = Field(..., description="ユーザーの解答")
 
-class RecallTestRequestModel(BaseModel):
+class RecallTestRequest(BaseModel):
     conversation_id: UUID = Field(..., description="会話セットID")
     answers: List[RecallTestAnswer] = Field(..., description="テストの解答")
 

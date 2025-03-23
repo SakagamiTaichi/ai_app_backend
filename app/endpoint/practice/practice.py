@@ -3,12 +3,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordBearer
-from app.dependencies.repositories import get_english_repository, get_auth_repository
-from app.features.practice.domain.practice_repository import PracticeRepository
-from app.features.auth.domain.auth_repository import AuthRepository
-from app.features.auth.service.auth_service import AuthService
-from app.features.practice.model.practice import Conversation, ConversationSetCreate, Message, MessageCreate, MessageTestResultSummary, RecallTestRequestModel
-from app.features.practice.service.practice_service import PracticeService
+from app.core.dependencies.repositories import get_auth_repository, get_english_repository
+from app.domain.auth.auth_repository import AuthRepository
+from app.domain.practice.practice_repository import PracticeRepository
+from app.services.auth.auth_service import AuthService
+from app.model.practice.practice import Conversation, ConversationResponse, ConversationSetCreate, Message, MessageCreate, MessageTestResultSummary, RecallTestRequest
+from app.services.practicce.practice_service import PracticeService
 
 router = APIRouter(prefix="/eigoat", tags=["eigoat"])
 
@@ -37,12 +37,12 @@ async def chat_stream(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/conversation_sets", response_model=List[Conversation])
+@router.get("/conversation_sets", response_model=ConversationResponse)
 async def get_conversation_sets(
     token: Annotated[str, Depends(oauth2_scheme)],
     chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
-) -> List[Conversation]:
+) -> ConversationResponse:
     """ログインユーザーの会話セットの一覧を取得する"""
     try:
         # 現在のユーザー情報を取得
@@ -69,7 +69,7 @@ async def get_messages(
     
 @router.post("/test_result", response_model=MessageTestResultSummary)
 async def post_test_results(
-    request: RecallTestRequestModel,
+    request: RecallTestRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]

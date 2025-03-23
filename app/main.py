@@ -1,11 +1,13 @@
 from fastapi import FastAPI
-from app.endpoints import  health_check
+from app.core.exception.app_exception import setup_exception_handlers
+from app.features.health_check import  health_check
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from app.core.config import settings
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
-from app.endpoints import auth, eigoat
+from app.features.auth.endpoint import auth
+from app.features.practice.endpoint import practice
 
 if settings.ENVIRONMENT == "production":
     # 本番環境用の設定
@@ -44,8 +46,10 @@ app.add_middleware(
     ]
 )
 
+setup_exception_handlers(app)
+
 app.include_router(health_check.router)
-app.include_router(eigoat.router)
+app.include_router(practice.router)
 app.include_router(auth.router)  # 認証エンドポイントを追加
 
 

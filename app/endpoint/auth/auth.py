@@ -2,10 +2,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from app.dependencies.repositories import get_auth_repository
-from app.features.auth.domain.auth_repository import AuthRepository
-from app.features.auth.model.auth import Token, UserCreate, UserLogin, UserResponse
-from app.features.auth.service.auth_service import AuthService
+from app.core.dependencies.repositories import get_auth_repository
+from app.domain.auth.auth_repository import AuthRepository
+from app.model.auth.auth import Token, UserCreate, UserLogin, UserResponse
+from app.services.auth.auth_service import AuthService
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
