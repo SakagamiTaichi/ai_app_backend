@@ -22,7 +22,7 @@ from app.core.config import settings
 from app.domain.practice.conversation import ConversationEntity
 from app.domain.practice.practice_repository import PracticeRepository
 from app.domain.practice.test_result import MessageScore, TestResult
-from app.model.practice.practice import Conversation, ConversationResponse, Message, MessageTestResult, MessageTestResultSummary, RecallTestRequest
+from app.model.practice.practice import Conversation, ConversationsResponse, Message, MessageTestResult, MessageTestResultSummary, RecallTestRequest
 
 
 class PracticeService:
@@ -90,10 +90,10 @@ class PracticeService:
             yield self.format_sse_message(error_message)
             yield "event: close\ndata: Stream ended with error\n\n"
 
-    async def get_conversation_sets(self, user_id: str) -> ConversationResponse:
-        """ユーザーの会話セットを取得する"""
+    async def get_conversations(self, user_id: str) -> ConversationsResponse:
+        """ユーザーの会話一覧を取得する"""
         
-        entities: List[ConversationEntity]= await self.repository.get_conversation_sets(user_id)
+        entities: List[ConversationEntity]= await self.repository.get_conversations(user_id)
         
         conversations = [
         Conversation(
@@ -105,12 +105,12 @@ class PracticeService:
         for entity in entities
     ]
         # ConversationResponseを作成して返す
-        return ConversationResponse(conversation=conversations)
+        return ConversationsResponse(conversations=conversations)
 
     
-    async def get_messages(self, conversation_id: UUID, user_id: str) -> List[Message]:
+    async def get_conversation(self, conversation_id: UUID, user_id: str) -> List[Message]:
         """会話セットのメッセージ一覧を取得する"""
-        return await self.repository.get_messages(conversation_id, user_id)
+        return await self.repository.get_conversation(conversation_id, user_id)
     
     async def create_conversation_set(self, title: str, user_id: str) -> Conversation:
         """新しい会話セットを作成する"""
@@ -181,7 +181,7 @@ class PracticeService:
         """テスト結果を処理し、データベースに保存する"""
         try:
             # リクエストの会話IDから会話セットを取得
-            conversation = await self.repository.get_messages(request.conversation_id, user_id)
+            conversation = await self.repository.get_conversation(request.conversation_id, user_id)
 
             # 前回のテスト結果を取得
             last_test_result = await self.repository.get_latest_test_result(request.conversation_id)

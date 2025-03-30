@@ -7,7 +7,7 @@ from app.core.dependencies.repositories import get_auth_repository, get_english_
 from app.domain.auth.auth_repository import AuthRepository
 from app.domain.practice.practice_repository import PracticeRepository
 from app.services.auth.auth_service import AuthService
-from app.model.practice.practice import Conversation, ConversationResponse, ConversationSetCreate, Message, MessageCreate, MessageTestResultSummary, RecallTestRequest
+from app.model.practice.practice import Conversation, ConversationsResponse, ConversationSetCreate, Message, MessageCreate, MessageTestResultSummary, RecallTestRequest
 from app.services.practicce.practice_service import PracticeService
 
 router = APIRouter(prefix="/practice", tags=["practice"])
@@ -37,33 +37,33 @@ async def chat_stream(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/conversation_sets", response_model=ConversationResponse)
-async def get_conversation_sets(
+@router.get("/conversations", response_model=ConversationsResponse)
+async def get_conversations(
     token: Annotated[str, Depends(oauth2_scheme)],
     chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
-) -> ConversationResponse:
+) -> ConversationsResponse:
     """ログインユーザーの会話セットの一覧を取得する"""
     try:
         # 現在のユーザー情報を取得
         current_user = await auth_service.get_current_user(token)
         # ユーザーIDに基づいて会話セットをフィルタリング
-        return await chat_service.get_conversation_sets(current_user.id)
+        return await chat_service.get_conversations(current_user.id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/message/{conversation_id}", response_model=List[Message])
-async def get_messages(
+@router.get("/conversation/{conversation_id}", response_model=List[Message])
+async def get_conversation(
     conversation_id: UUID,
     token: Annotated[str, Depends(oauth2_scheme)],
     chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
 ) -> List[Message]:
-    """特定の会話セットに属するメッセージを取得する"""
+    """特定の会話を取得する"""
     try:
         # 現在のユーザー情報を取得
         current_user = await auth_service.get_current_user(token)
-        return await chat_service.get_messages(conversation_id, current_user.id)
+        return await chat_service.get_conversation(conversation_id, current_user.id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
@@ -83,14 +83,14 @@ async def post_test_results(
         raise HTTPException(status_code=500, detail=str(e))
     
 
-@router.post("/conversation_sets", response_model=Conversation)
-async def create_conversation_set(
+@router.post("/conversation", response_model=Conversation)
+async def create_conversations(
     data: ConversationSetCreate,
     token: Annotated[str, Depends(oauth2_scheme)],
     chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
 ) -> Conversation:
-    """新しい会話セットを作成する"""
+    """新しい会話を作成する"""
     try:
         # 現在のユーザー情報を取得
         current_user = await auth_service.get_current_user(token)

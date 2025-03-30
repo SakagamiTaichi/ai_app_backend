@@ -16,7 +16,7 @@ class PracticeSupabaseRepository(PracticeRepository):
     def __init__(self, client: Client):
         self.client = client
     
-    async def get_conversation_sets(self, user_id: str) -> List[ConversationEntity]:
+    async def get_conversations(self, user_id: str) -> List[ConversationEntity]:
         """特定ユーザーの会話セットの一覧を取得する"""
         try:
             response = self.client.table('en_conversations') \
@@ -38,10 +38,10 @@ class PracticeSupabaseRepository(PracticeRepository):
 
             return sets
         except Exception as e:
-            print(f"Error fetching conversation sets: {str(e)}")
+            print(f"Error fetching conversations: {str(e)}")
             raise
     
-    async def get_messages(self, conversation_id: UUID, user_id: str) -> List[Message]:
+    async def get_conversation(self, conversation_id: UUID, user_id: str) -> List[Message]:
         """特定の会話セットに属するメッセージを取得する（アクセス権の確認あり）"""
         try:
             # まず会話セットの所有者を確認

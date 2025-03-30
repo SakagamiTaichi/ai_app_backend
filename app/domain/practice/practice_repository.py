@@ -11,12 +11,12 @@ class PracticeRepository(ABC):
     """英語学習関連データのリポジトリインターフェース"""
     
     @abstractmethod
-    async def get_conversation_sets(self, user_id: str) -> List[ConversationEntity]:
+    async def get_conversations(self, user_id: str) -> List[ConversationEntity]:
         """特定ユーザーの会話セットの一覧を取得する"""
         pass
     
     @abstractmethod
-    async def get_messages(self, conversation_id: UUID, user_id: str) -> List[Message]:
+    async def get_conversation(self, conversation_id: UUID, user_id: str) -> List[Message]:
         """特定の会話セットに属するメッセージを取得する（アクセス権の確認あり）"""
         pass
     

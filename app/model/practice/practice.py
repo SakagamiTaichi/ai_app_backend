@@ -3,6 +3,7 @@ from typing import List
 from uuid import UUID
 from pydantic import BaseModel, Field
 
+
 class ChatRequest(BaseModel):
     message: str = Field(..., description="user input message")
 
@@ -15,8 +16,8 @@ class Conversation(BaseModel):
     title: str = Field(..., description="title")
     created_at: datetime.datetime = Field(..., description="created at")
 
-class ConversationResponse(BaseModel):
-    conversation: List[Conversation] = Field(..., description="conversation")
+class ConversationsResponse(BaseModel):
+    conversations: List[Conversation] = Field(..., description="conversation")
 
 class ConversationSetCreate(BaseModel):
     title: str = Field(..., description="会話セットのタイトル")
@@ -28,6 +29,9 @@ class Message(BaseModel):
     message_en: str = Field(..., description="message in english")
     message_ja: str = Field(..., description="message in japanese")
     created_at: datetime.datetime = Field(..., description="created at")
+
+class ConversationResponse(BaseModel):
+    conversation :List[Message] = Field(..., description="会話セットのメッセージ一覧")
 
 class MessageCreate(BaseModel):
     conversation_id: UUID = Field(..., description="会話セットID")
