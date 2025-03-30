@@ -10,7 +10,7 @@ from app.services.auth.auth_service import AuthService
 from app.model.practice.practice import Conversation, ConversationResponse, ConversationSetCreate, Message, MessageCreate, MessageTestResultSummary, RecallTestRequest
 from app.services.practicce.practice_service import PracticeService
 
-router = APIRouter(prefix="/eigoat", tags=["eigoat"])
+router = APIRouter(prefix="/practice", tags=["practice"])
 
 # OAuth2のパスワードベアラースキーム
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/auth/token")

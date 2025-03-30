@@ -77,10 +77,12 @@ class TestResult(BaseModel):
     message_scores: List[MessageScore] = Field(ge=1,default_factory=list)
     created_at: datetime = Field(default_factory=datetime.now)
         
-    @field_validator('message_scores')
-    def validate_message_scores(self, value: List[MessageScore]):
+    @field_validator('message_scores', mode='before')
+    @classmethod
+    def validate_message_scores(cls, value: List[MessageScore]):
         if not value:
             raise ValueError("メッセージスコアは1つ以上必要です")
+        return value
 
     @computed_field
     def overall_score(self) -> float:

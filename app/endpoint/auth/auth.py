@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from app.core.dependencies.repositories import get_auth_repository
 from app.domain.auth.auth_repository import AuthRepository
-from app.model.auth.auth import Token, UserCreate, UserLogin, UserResponse
+from app.model.auth.auth import TokenResponse, UserCreateRequest, UserLoginRequest, UserResponse
 from app.services.auth.auth_service import AuthService
 
 
@@ -19,33 +19,33 @@ def get_auth_service(repository: Annotated[AuthRepository, Depends(get_auth_repo
 
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def signup(
-    user_data: UserCreate,
+    user_data: UserCreateRequest,
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
 ) -> UserResponse:
     """新規ユーザー登録"""
     return await auth_service.signup(user_data.email, user_data.password)
 
-@router.post("/token", response_model=Token)
+@router.post("/token", response_model=TokenResponse)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
-) -> Token:
+) -> TokenResponse:
     """OAuth2互換のトークン取得エンドポイント"""
     return await auth_service.signin(form_data.username, form_data.password)
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=TokenResponse)
 async def login(
-    user_data: UserLogin,
+    user_data: UserLoginRequest,
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
-) -> Token:
+) -> TokenResponse:
     """ユーザーログイン"""
     return await auth_service.signin(user_data.email, user_data.password)
 
-@router.post("/refresh", response_model=Token)
+@router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
-    token: Token,
+    token: TokenResponse,
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
-) -> Token:
+) -> TokenResponse:
     """トークンのリフレッシュ"""
     return await auth_service.refresh_token(token.refresh_token)
 

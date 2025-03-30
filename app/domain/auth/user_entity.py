@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 
-class UserResponse(BaseModel):
+class UserEntity(BaseModel):
     """ユーザー情報レスポンス用のスキーマ"""
     id: str = Field(..., description="ユーザーID")
     email: EmailStr = Field(..., description="ユーザーのメールアドレス")

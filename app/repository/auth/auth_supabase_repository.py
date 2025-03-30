@@ -1,8 +1,9 @@
 from supabase import Client
 from app.core.exception.app_exception import InternalServerError
 from app.domain.auth.auth_repository import AuthRepository
+from app.domain.auth.token_value_object import TokenValueObject
+from app.domain.auth.user_entity import UserEntity
 from app.exception.auth.auth_exception import AuthenticationException, FailedToCreateUserException
-from app.model.auth.auth import Token, UserResponse
 from fastapi import HTTPException, status
 
 class AuthSupabaseRepository(AuthRepository):
@@ -11,7 +12,7 @@ class AuthSupabaseRepository(AuthRepository):
     def __init__(self, client: Client):
         self.client = client
     
-    async def signup(self, email: str, password: str) -> UserResponse:
+    async def signup(self, email: str, password: str) -> UserEntity:
         """新規ユーザーを登録する"""
         try:
             # Supabaseの認証APIを使用してユーザーを登録
@@ -28,7 +29,7 @@ class AuthSupabaseRepository(AuthRepository):
             if not user_data.email:
                 raise FailedToCreateUserException()
             
-            return UserResponse(
+            return UserEntity(
                 id=user_data.id,
                 email=user_data.email,
                 is_active=not user_data.email_confirmed_at is None
@@ -37,7 +38,7 @@ class AuthSupabaseRepository(AuthRepository):
         except Exception as e:
             raise InternalServerError()
     
-    async def signin(self, email: str, password: str) -> Token:
+    async def signin(self, email: str, password: str) -> TokenValueObject:
         """ユーザーをサインインさせる"""
         try:
 
@@ -52,7 +53,7 @@ class AuthSupabaseRepository(AuthRepository):
                 raise AuthenticationException()
             
             # トークン情報を返す
-            return Token(
+            return TokenValueObject(
                 access_token=session.access_token,
                 refresh_token=session.refresh_token,
                 token_type="bearer"
@@ -61,7 +62,7 @@ class AuthSupabaseRepository(AuthRepository):
         except Exception as e:
             raise InternalServerError()
     
-    async def refresh_token(self, refresh_token: str) -> Token:
+    async def refresh_token(self, refresh_token: str) -> TokenValueObject:
         """リフレッシュトークンを使用して新しいアクセストークンを取得する"""
         try:
             # Supabaseの認証APIを使用してトークンをリフレッシュ
@@ -75,7 +76,7 @@ class AuthSupabaseRepository(AuthRepository):
                 )
             
             # 新しいトークン情報を返す
-            return Token(
+            return TokenValueObject(
                 access_token=session.access_token,
                 refresh_token=session.refresh_token,
                 token_type="bearer"
@@ -88,7 +89,7 @@ class AuthSupabaseRepository(AuthRepository):
                 detail=f"トークンリフレッシュエラー: {str(e)}"
             )
     
-    async def get_user(self, user_id: str) -> UserResponse:
+    async def get_user(self, user_id: str) -> UserEntity:
         """ユーザー情報を取得する"""
         try:
             # Supabaseからユーザー情報を取得
@@ -107,7 +108,7 @@ class AuthSupabaseRepository(AuthRepository):
                     detail="ユーザーが見つかりません"
                 )
             
-            return UserResponse(
+            return UserEntity(
                 id=user_data.id,
                 email=user_data.email,
                 is_active=not user_data.email_confirmed_at is None
@@ -120,7 +121,7 @@ class AuthSupabaseRepository(AuthRepository):
                 detail=f"ユーザー情報取得エラー: {str(e)}"
             )
     
-    async def get_current_user(self, access_token: str) -> UserResponse:
+    async def get_current_user(self, access_token: str) -> UserEntity:
         try:
             # Supabaseの認証APIを使用してトークンを検証
             user = self.client.auth.get_user(access_token)
@@ -132,7 +133,7 @@ class AuthSupabaseRepository(AuthRepository):
                 )
             
             # ユーザー情報を返す
-            return UserResponse(
+            return UserEntity(
                 id=user.user.id,
                 email=user.user.email,
                 is_active=not user.user.email_confirmed_at is None
