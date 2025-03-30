@@ -22,7 +22,7 @@ from app.core.config import settings
 from app.domain.practice.conversation import ConversationEntity
 from app.domain.practice.practice_repository import PracticeRepository
 from app.domain.practice.test_result import MessageScore, TestResult
-from app.model.practice.practice import Conversation, ConversationsResponse, Message, MessageTestResult, MessageTestResultSummary, RecallTestRequest
+from app.model.practice.practice import Conversation, ConversationResponse, ConversationsResponse, MessageResponse, MessageTestResult, MessageTestResultSummary, RecallTestRequest
 
 
 class PracticeService:
@@ -108,10 +108,25 @@ class PracticeService:
         return ConversationsResponse(conversations=conversations)
 
     
-    async def get_conversation(self, conversation_id: UUID, user_id: str) -> List[Message]:
+    async def get_conversation(self, conversation_id: UUID, user_id: str) -> ConversationResponse:
         """会話セットのメッセージ一覧を取得する"""
-        return await self.repository.get_conversation(conversation_id, user_id)
-    
+        entities: List[MessageResponse] = await self.repository.get_conversation(conversation_id, user_id)
+        messages = [
+            MessageResponse(
+                conversation_id=entity.conversation_id,
+                message_order=entity.message_order,
+                speaker_number=entity.speaker_number,
+                message_en=entity.message_en,
+                message_ja=entity.message_ja,
+                created_at=entity.created_at
+            )
+            for entity in entities
+        ]
+        # ConversationResponseを作成して返す
+        return ConversationResponse(messages=messages)
+
+
+
     async def create_conversation_set(self, title: str, user_id: str) -> Conversation:
         """新しい会話セットを作成する"""
         conversation_set = Conversation(
@@ -125,9 +140,9 @@ class PracticeService:
     
     async def create_message(self, conversation_id: UUID, message_order: int, 
                              speaker_number: int, message_en: str, 
-                             message_ja: str) -> Message:
+                             message_ja: str) -> MessageResponse:
         """新しいメッセージを作成する"""
-        message = Message(
+        message = MessageResponse(
             conversation_id=conversation_id,
             message_order=message_order,
             speaker_number=speaker_number,

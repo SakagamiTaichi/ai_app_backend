@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -7,7 +7,7 @@ from app.core.dependencies.repositories import get_auth_repository, get_english_
 from app.domain.auth.auth_repository import AuthRepository
 from app.domain.practice.practice_repository import PracticeRepository
 from app.services.auth.auth_service import AuthService
-from app.model.practice.practice import Conversation, ConversationsResponse, ConversationSetCreate, Message, MessageCreate, MessageTestResultSummary, RecallTestRequest
+from app.model.practice.practice import Conversation, ConversationResponse, ConversationsResponse, ConversationSetCreate, MessageResponse, MessageCreate, MessageTestResultSummary, RecallTestRequest
 from app.services.practicce.practice_service import PracticeService
 
 router = APIRouter(prefix="/practice", tags=["practice"])
@@ -37,7 +37,7 @@ async def chat_stream(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/conversations", response_model=ConversationsResponse)
+@router.get("/conversations")
 async def get_conversations(
     token: Annotated[str, Depends(oauth2_scheme)],
     chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
@@ -52,13 +52,13 @@ async def get_conversations(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/conversation/{conversation_id}", response_model=List[Message])
+@router.get("/conversation/{conversation_id}")
 async def get_conversation(
     conversation_id: UUID,
     token: Annotated[str, Depends(oauth2_scheme)],
     chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
-) -> List[Message]:
+) -> ConversationResponse:
     """特定の会話を取得する"""
     try:
         # 現在のユーザー情報を取得
@@ -98,11 +98,11 @@ async def create_conversations(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/message", response_model=Message)
+@router.post("/message", response_model=MessageResponse)
 async def create_message(
     data: MessageCreate,
     chat_service: Annotated[PracticeService, Depends(get_english_chat_service)]
-) -> Message:
+) -> MessageResponse:
     """新しいメッセージを作成する"""
     try:
         return await chat_service.create_message(

@@ -4,7 +4,7 @@ from uuid import UUID
 
 from app.domain.practice.conversation import ConversationEntity
 from app.domain.practice.test_result import TestResult
-from app.model.practice.practice import Conversation, Message
+from app.model.practice.practice import Conversation, MessageResponse
 
 
 class PracticeRepository(ABC):
@@ -16,12 +16,12 @@ class PracticeRepository(ABC):
         pass
     
     @abstractmethod
-    async def get_conversation(self, conversation_id: UUID, user_id: str) -> List[Message]:
+    async def get_conversation(self, conversation_id: UUID, user_id: str) -> List[MessageResponse]:
         """特定の会話セットに属するメッセージを取得する（アクセス権の確認あり）"""
         pass
     
     @abstractmethod
-    async def create_message(self, message: Message) -> Message:
+    async def create_message(self, message: MessageResponse) -> MessageResponse:
         """メッセージを作成する"""
         pass
     

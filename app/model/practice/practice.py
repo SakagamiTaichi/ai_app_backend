@@ -22,7 +22,7 @@ class ConversationsResponse(BaseModel):
 class ConversationSetCreate(BaseModel):
     title: str = Field(..., description="会話セットのタイトル")
 
-class Message(BaseModel):
+class MessageResponse(BaseModel):
     conversation_id: UUID = Field(..., description="set id")
     message_order: int = Field(..., description="message order")
     speaker_number: int = Field(..., description="speaker number")
@@ -31,7 +31,7 @@ class Message(BaseModel):
     created_at: datetime.datetime = Field(..., description="created at")
 
 class ConversationResponse(BaseModel):
-    conversation :List[Message] = Field(..., description="会話セットのメッセージ一覧")
+    messages :List[MessageResponse] = Field(..., description="会話セットのメッセージ一覧")
 
 class MessageCreate(BaseModel):
     conversation_id: UUID = Field(..., description="会話セットID")

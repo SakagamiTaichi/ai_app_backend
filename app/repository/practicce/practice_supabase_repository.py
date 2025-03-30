@@ -8,7 +8,7 @@ from supabase import Client
 from app.domain.practice.conversation import ConversationEntity
 from app.domain.practice.test_result import MessageScore, TestResult
 from app.domain.practice.practice_repository import PracticeRepository
-from app.model.practice.practice import Conversation, Message
+from app.model.practice.practice import Conversation, MessageResponse
 
 class PracticeSupabaseRepository(PracticeRepository):
     """SupabaseをバックエンドとしたEnglishRepositoryの実装"""
@@ -41,7 +41,7 @@ class PracticeSupabaseRepository(PracticeRepository):
             print(f"Error fetching conversations: {str(e)}")
             raise
     
-    async def get_conversation(self, conversation_id: UUID, user_id: str) -> List[Message]:
+    async def get_conversation(self, conversation_id: UUID, user_id: str) -> List[MessageResponse]:
         """特定の会話セットに属するメッセージを取得する（アクセス権の確認あり）"""
         try:
             # まず会話セットの所有者を確認
@@ -66,7 +66,7 @@ class PracticeSupabaseRepository(PracticeRepository):
     
             # レスポンスからメッセージリストを作成
             messages = [
-                Message(
+                MessageResponse(
                     conversation_id=UUID(record['conversation_id']),
                     message_order=record['message_order'],
                     speaker_number=record['speaker_number'],
@@ -85,7 +85,7 @@ class PracticeSupabaseRepository(PracticeRepository):
             print(f"Error fetching messages: {str(e)}")
             raise
     
-    async def create_message(self, message: Message) -> Message:
+    async def create_message(self, message: MessageResponse) -> MessageResponse:
         """メッセージを作成する"""
         try:
             # Messageオブジェクトから辞書を作成
