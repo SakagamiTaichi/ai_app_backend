@@ -14,6 +14,11 @@ class PracticeRepository(ABC):
     async def get_conversations(self, user_id: str) -> List[ConversationEntity]:
         """特定ユーザーの会話セットの一覧を取得する"""
         pass
+
+    @abstractmethod
+    async def reorder_conversations(self, user_id: str, conversation_ids: List[UUID]) -> None:
+        """会話セットの順序を変更する"""
+        pass
     
     @abstractmethod
     async def get_conversation(self, conversation_id: UUID, user_id: str) -> List[MessageResponse]:

@@ -41,9 +41,25 @@ class PracticeSupabaseRepository(PracticeRepository):
         except Exception as e:
             print(f"Error fetching conversations: {str(e)}")
             raise
+
+    async def reorder_conversations(self, user_id: str, conversation_ids: List[UUID]) -> None:
+        """会話セットの順序を変更する"""
+        try:
+            # TODO: パフォーマンスの観点から、バルクアップデートを検討する
+            # 各会話セットの新しい順序を設定
+            for order, conversation_id in enumerate(conversation_ids):
+                self.client.table('en_conversations') \
+                    .update({'order': order}) \
+                    .eq('user_id', user_id) \
+                    .eq('id', str(conversation_id)) \
+                    .execute()
+        except Exception as e:
+            print(f"Error reordering conversations: {str(e)}")
+            raise
     
     async def get_conversation(self, conversation_id: UUID, user_id: str) -> List[MessageResponse]:
         """特定の会話セットに属するメッセージを取得する（アクセス権の確認あり）"""
+        #TODO :所有者の確認などは、リポジトリではなくサービス層で行うべきかもしれない
         try:
             # まず会話セットの所有者を確認
             owner_check = self.client.table('en_conversations') \

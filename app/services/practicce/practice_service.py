@@ -110,7 +110,16 @@ class PracticeService:
     
     async def reorder_conversations(self, user_id: str, conversation_ids: List[UUID]) -> None:
         """会話セットの順序を変更する"""
+        # ユーザーの会話一覧を取得
+        conversations = await self.repository.get_conversations(user_id)
+
+        # 指定された会話セットがユーザーの会話セットに存在するか確認
+        for conversation_id in conversation_ids:
+            if not any(conversation.id == conversation_id for conversation in conversations):
+                raise ValueError(f"会話セット {conversation_id} はユーザーの会話セットに存在しません")
+            
         # 各会話セットの新しい順序を設定
+        await self.repository.reorder_conversations(user_id, conversation_ids)
 
     
     async def get_conversation(self, conversation_id: UUID, user_id: str) -> ConversationResponse:
