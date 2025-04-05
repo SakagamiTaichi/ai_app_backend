@@ -31,7 +31,8 @@ class PracticeSupabaseRepository(PracticeRepository):
                     id=UUID(record['id']),
                     user_id=UUID(record['user_id']),
                     title=record['title'],
-                    created_at=datetime.fromisoformat(record['created_at'].replace('Z', '+00:00'))
+                    order=record['order'],
+                    created_at=datetime.fromisoformat(record['created_at'].replace('Z', '+00:00'),)
                 )
                 for record in response.data
             ]

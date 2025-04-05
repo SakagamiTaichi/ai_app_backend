@@ -100,12 +100,17 @@ class PracticeService:
             id=entity.id,
             user_id=entity.user_id,
             title=entity.title,
+            order=entity.order,
             created_at=entity.created_at
         )
         for entity in entities
     ]
         # ConversationResponseを作成して返す
         return ConversationsResponse(conversations=conversations)
+    
+    async def reorder_conversations(self, user_id: str, conversation_ids: List[UUID]) -> None:
+        """会話セットの順序を変更する"""
+        # 各会話セットの新しい順序を設定
 
     
     async def get_conversation(self, conversation_id: UUID, user_id: str) -> ConversationResponse:
@@ -133,6 +138,7 @@ class PracticeService:
             id=uuid4(),
             user_id=UUID(user_id),
             title=title,
+            order=0,  # デフォルトの順序を設定
             created_at=datetime.now()
         )
         

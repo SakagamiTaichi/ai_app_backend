@@ -14,10 +14,15 @@ class Conversation(BaseModel):
     id: UUID = Field(..., description="id")
     user_id : UUID = Field(..., description="user id")
     title: str = Field(..., description="title")
+    order : int = Field(..., description="order")
     created_at: datetime.datetime = Field(..., description="created at")
 
 class ConversationsResponse(BaseModel):
     conversations: List[Conversation] = Field(..., description="conversation")
+
+
+class ConversationsOrderRequest(BaseModel):
+    conversation_ids: List[UUID] = Field(..., description="会話セットID")
 
 class ConversationSetCreate(BaseModel):
     title: str = Field(..., description="会話セットのタイトル")

@@ -8,3 +8,4 @@ class ConversationEntity(BaseModel):
     user_id : UUID = Field(..., description="user id")
     title: str = Field(...,min_length=1,max_length=200, description="title")
     created_at: datetime.datetime = Field(..., description="created at")
+    order: int = Field(..., description="order")

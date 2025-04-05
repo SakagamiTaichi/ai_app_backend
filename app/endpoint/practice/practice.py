@@ -7,7 +7,7 @@ from app.core.dependencies.repositories import get_auth_repository, get_english_
 from app.domain.auth.auth_repository import AuthRepository
 from app.domain.practice.practice_repository import PracticeRepository
 from app.services.auth.auth_service import AuthService
-from app.model.practice.practice import Conversation, ConversationResponse, ConversationsResponse, ConversationSetCreate, MessageResponse, MessageCreate, MessageTestResultSummary, RecallTestRequest
+from app.model.practice.practice import Conversation, ConversationResponse, ConversationsOrderRequest, ConversationsResponse, ConversationSetCreate, MessageResponse, MessageCreate, MessageTestResultSummary, RecallTestRequest
 from app.services.practicce.practice_service import PracticeService
 
 router = APIRouter(prefix="/practice", tags=["practice"])
@@ -51,6 +51,21 @@ async def get_conversations(
         return await chat_service.get_conversations(current_user.id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.put("/conversations/reorder")
+async def reorder_conversations(
+    data: ConversationsOrderRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    practice_service: Annotated[PracticeService, Depends(get_english_chat_service)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)]
+) -> None:
+    """会話セットの順序を変更する"""
+    try:
+        # 現在のユーザー情報を取得
+        current_user = await auth_service.get_current_user(token)
+        return await practice_service.reorder_conversations(current_user.id, data.conversation_ids)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/conversation/{conversation_id}")
 async def get_conversation(
@@ -66,6 +81,8 @@ async def get_conversation(
         return await chat_service.get_conversation(conversation_id, current_user.id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
     
 @router.post("/test_result", response_model=MessageTestResultSummary)
 async def post_test_results(
