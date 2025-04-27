@@ -3,7 +3,7 @@ from app.core.exception.app_exception import AppException
 
 class AuthenticationException(AppException):
     """認証に関する例外"""
-    def __init__(self, detail: str = "認証に失敗しました"):
+    def __init__(self, detail: str = "パスワードもしくはIDが間違っています。"):
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=detail,

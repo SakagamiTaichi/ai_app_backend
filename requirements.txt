@@ -22,4 +22,7 @@ pyjwt
 passlib
 python-multipart
 email-validator
-open-deep-research
+sqlalchemy
+asyncpg
+python-jose[cryptography]
+passlib[bcrypt]

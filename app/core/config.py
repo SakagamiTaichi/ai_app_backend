@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     LANGCHAIN_PROJECT: str = ""
     ENVIRONMENT: str = ""
 
+    # 認証関連の設定
+    SECRET_KEY: str = ""  # JWT署名用の秘密鍵
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
     class Config:
         case_sensitive = True
         env_file = ".env"
