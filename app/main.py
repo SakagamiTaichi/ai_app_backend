@@ -1,13 +1,14 @@
 from fastapi import FastAPI
 from app.core.exception.app_exception import setup_exception_handlers
 from app.endpoint.health_check import  health_check
+# from app.endpoint.search_event import search_event_endpoint
+from app.endpoint.auth import auth
+from app.endpoint.practice import practice_endpoint
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from app.core.config import settings
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
-from app.endpoint.auth import auth
-from app.endpoint.practice import practice
 
 if settings.ENVIRONMENT == "production":
     # 本番環境用の設定
@@ -49,7 +50,8 @@ app.add_middleware(
 setup_exception_handlers(app)
 
 app.include_router(health_check.router)
-app.include_router(practice.router)
+app.include_router(practice_endpoint.router)
 app.include_router(auth.router)  # 認証エンドポイントを追加
+# app.include_router(search_event_endpoint.router, tags=["auth"])
 
 

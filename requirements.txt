@@ -22,3 +22,4 @@ pyjwt
 passlib
 python-multipart
 email-validator
+open-deep-research

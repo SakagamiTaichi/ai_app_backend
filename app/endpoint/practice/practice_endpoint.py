@@ -1,7 +1,6 @@
 from typing import Annotated
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordBearer
 from app.core.dependencies.repositories import get_auth_repository, get_english_repository
 from app.domain.auth.auth_repository import AuthRepository
@@ -16,31 +15,16 @@ router = APIRouter(prefix="/practice", tags=["practice"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/auth/token")
 
 # サービスのインスタンス作成に依存性注入を使用
-def get_english_chat_service(repository: Annotated[PracticeRepository, Depends(get_english_repository)]) -> PracticeService:
+def get_practice_service(repository: Annotated[PracticeRepository, Depends(get_english_repository)]) -> PracticeService:
     return PracticeService(repository)
 
 def get_auth_service(repository: Annotated[AuthRepository, Depends(get_auth_repository)]) -> AuthService:
     return AuthService(repository)
 
-@router.get("/chat")
-async def chat_stream(
-    message: str,
-    session_id: str,
-    chat_service: Annotated[PracticeService, Depends(get_english_chat_service)]
-) -> StreamingResponse:
-    """チャットのストリーミングレスポンスを取得する"""
-    try:
-        return StreamingResponse(
-            chat_service.stream_response(message, session_id),
-            media_type="text/event-stream"
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.get("/conversations")
 async def get_conversations(
     token: Annotated[str, Depends(oauth2_scheme)],
-    chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
+    chat_service: Annotated[PracticeService, Depends(get_practice_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
 ) -> ConversationsResponse:
     """ログインユーザーの会話セットの一覧を取得する"""
@@ -56,7 +40,7 @@ async def get_conversations(
 async def reorder_conversations(
     data: ConversationsOrderRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
-    practice_service: Annotated[PracticeService, Depends(get_english_chat_service)],
+    practice_service: Annotated[PracticeService, Depends(get_practice_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
 ) -> None:
     """会話セットの順序を変更する"""
@@ -71,7 +55,7 @@ async def reorder_conversations(
 async def get_conversation(
     conversation_id: UUID,
     token: Annotated[str, Depends(oauth2_scheme)],
-    chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
+    chat_service: Annotated[PracticeService, Depends(get_practice_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
 ) -> ConversationResponse:
     """特定の会話を取得する"""
@@ -88,7 +72,7 @@ async def get_conversation(
 async def post_test_results(
     request: RecallTestRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
-    chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
+    chat_service: Annotated[PracticeService, Depends(get_practice_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
 ) -> MessageTestResultSummary:
     """ログインユーザーのテスト結果を取得する"""
@@ -104,7 +88,7 @@ async def post_test_results(
 async def create_conversations(
     data: ConversationSetCreate,
     token: Annotated[str, Depends(oauth2_scheme)],
-    chat_service: Annotated[PracticeService, Depends(get_english_chat_service)],
+    chat_service: Annotated[PracticeService, Depends(get_practice_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
 ) -> Conversation:
     """新しい会話を作成する"""
@@ -118,7 +102,7 @@ async def create_conversations(
 @router.post("/message", response_model=MessageResponse)
 async def create_message(
     data: MessageCreate,
-    chat_service: Annotated[PracticeService, Depends(get_english_chat_service)]
+    chat_service: Annotated[PracticeService, Depends(get_practice_service)]
 ) -> MessageResponse:
     """新しいメッセージを作成する"""
     try:

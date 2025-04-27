@@ -1,4 +1,5 @@
 from app.domain.auth.auth_repository import AuthRepository
+from app.domain.auth.login_information_value_object import LoginInformationValueObject
 from app.model.auth.auth import TokenResponse, UserResponse
 
 class AuthService:
@@ -23,10 +24,13 @@ class AuthService:
     async def signin(self, email: str, password: str) -> TokenResponse:
         """ユーザーサインイン"""
         try:
-            valueObject =  await self.repository.signin(email, password)
+            # ログイン情報バリューオブジェクトに変換
+            loginInfo = LoginInformationValueObject(email=email, password=password)
+            
+            valueObject =  await self.repository.signin(loginInfo)
             return TokenResponse(
                 access_token=valueObject.access_token,
-                refresh_token=valueObject.refresh_token,
+                refresh_token=valueObject.refresh_token.refresh_token,
                 token_type=valueObject.token_type
             )
         except Exception as e:
@@ -38,7 +42,7 @@ class AuthService:
             valueObject =  await self.repository.refresh_token(refresh_token)
             return TokenResponse(
                 access_token=valueObject.access_token,
-                refresh_token=valueObject.refresh_token,
+                refresh_token=valueObject.refresh_token.refresh_token,
                 token_type=valueObject.token_type
             )
         except Exception as e:

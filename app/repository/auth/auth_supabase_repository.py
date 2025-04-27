@@ -1,6 +1,8 @@
 from supabase import Client
 from app.core.exception.app_exception import InternalServerError
 from app.domain.auth.auth_repository import AuthRepository
+from app.domain.auth.login_information_value_object import LoginInformationValueObject
+from app.domain.auth.refresh_token_value_object import RefreshTokenValueObject
 from app.domain.auth.token_value_object import TokenValueObject
 from app.domain.auth.user_entity import UserEntity
 from app.exception.auth.auth_exception import AuthenticationException, FailedToCreateUserException
@@ -38,14 +40,14 @@ class AuthSupabaseRepository(AuthRepository):
         except Exception as e:
             raise InternalServerError()
     
-    async def signin(self, email: str, password: str) -> TokenValueObject:
+    async def signin(self, loginInfo:LoginInformationValueObject) -> TokenValueObject:
         """ユーザーをサインインさせる"""
         try:
 
             # Supabaseの認証APIを使用してサインイン
             response = self.client.auth.sign_in_with_password({
-                "email": email,
-                "password": password
+                "email": loginInfo.email,
+                "password": loginInfo.password
             })
             
             session = response.session
@@ -55,7 +57,7 @@ class AuthSupabaseRepository(AuthRepository):
             # トークン情報を返す
             return TokenValueObject(
                 access_token=session.access_token,
-                refresh_token=session.refresh_token,
+                refresh_token=RefreshTokenValueObject(refresh_token=session.refresh_token),
                 token_type="bearer"
             )
             
@@ -78,7 +80,7 @@ class AuthSupabaseRepository(AuthRepository):
             # 新しいトークン情報を返す
             return TokenValueObject(
                 access_token=session.access_token,
-                refresh_token=session.refresh_token,
+                refresh_token=RefreshTokenValueObject(refresh_token=session.refresh_token),
                 token_type="bearer"
             )
             

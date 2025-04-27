@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from app.domain.auth.login_information_value_object import LoginInformationValueObject
 from app.domain.auth.token_value_object import TokenValueObject
 from app.domain.auth.user_entity import UserEntity
 
@@ -14,7 +15,7 @@ class AuthRepository(ABC):
         pass
     
     @abstractmethod
-    async def signin(self, email: str, password: str) -> TokenValueObject:
+    async def signin(self, loginInfo : LoginInformationValueObject) -> TokenValueObject:
         """ユーザーをサインインさせる"""
         pass
     
