@@ -6,7 +6,7 @@ from app.domain.auth.login_information_value_object import LoginInformationValue
 from app.domain.auth.refresh_token_value_object import RefreshTokenValueObject
 from app.domain.auth.token_value_object import TokenValueObject
 from app.domain.auth.user_entity import UserEntity
-from app.models.auth.user_model import UserModel
+from app.schema.auth.user_model import UserModel
 from app.exception.auth.auth_exception import AuthenticationException, FailedToCreateUserException, UserAlreadyExistsException
 from fastapi import HTTPException, status
 

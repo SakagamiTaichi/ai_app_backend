@@ -2,6 +2,9 @@
 import asyncio
 from app.core.database import engine, Base
 
+# モデルをインポートすることで、Base.metadataに登録される
+from app.schema.auth.user_model import UserModel
+
 async def init_db():
     async with engine.begin() as conn:
         # テーブルを削除して再作成する場合（開発時のみ）
