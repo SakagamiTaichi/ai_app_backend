@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from supabase import Client
 
 from app.domain.practice.conversation import ConversationEntity
-from app.domain.practice.test_result import MessageScore, TestResult
+from app.domain.practice.test_result import MessageScore, TestResultEntity
 from app.domain.practice.practice_repository import PracticeRepository
 from app.model.practice.practice import Conversation, MessageResponse
 
@@ -148,7 +148,7 @@ class PracticeSupabaseRepository(PracticeRepository):
             print(f"Error creating conversation set: {str(e)}")
             raise
 
-    async def save_test_result(self, test_result: TestResult) -> TestResult:
+    async def save_test_result(self, test_result: TestResultEntity) -> TestResultEntity:
         """テスト結果をデータベースに保存する"""
         try:
             # 会話テストスコアを保存
@@ -182,7 +182,7 @@ class PracticeSupabaseRepository(PracticeRepository):
             print(f"Error saving test results: {str(e)}")
             raise
     
-    async def get_latest_test_result(self, conversation_id: UUID) -> Optional[TestResult]:
+    async def get_latest_test_result(self, conversation_id: UUID) -> Optional[TestResultEntity]:
         """指定された会話の最新のテスト結果を取得する"""
         try:
             # 最新のテスト結果を取得
@@ -229,7 +229,7 @@ class PracticeSupabaseRepository(PracticeRepository):
                     message_scores.append(score)
             
             # TestResultエンティティを作成して返す
-            return TestResult(
+            return TestResultEntity(
                 conversation_id=UUID(last_test['conversation_id']),
                 test_number=last_test['test_number'],
                 message_scores=message_scores,

@@ -3,7 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from app.domain.practice.conversation import ConversationEntity
-from app.domain.practice.test_result import TestResult
+from app.domain.practice.test_result import TestResultEntity
 from app.model.practice.practice import Conversation, MessageResponse
 
 
@@ -36,12 +36,12 @@ class PracticeRepository(ABC):
         pass
 
     @abstractmethod
-    async def save_test_result(self, test_result: TestResult) -> TestResult:
+    async def save_test_result(self, test_result: TestResultEntity) -> TestResultEntity:
         """テスト結果をデータベースに保存する"""
         pass
     
     @abstractmethod
-    async def get_latest_test_result(self, conversation_id: UUID) -> Optional[TestResult]:
+    async def get_latest_test_result(self, conversation_id: UUID) -> Optional[TestResultEntity]:
         """指定された会話の最新のテスト結果を取得する"""
         pass
     

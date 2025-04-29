@@ -70,7 +70,7 @@ class MessageScore(BaseModel):
         )
 
 
-class TestResult(BaseModel):
+class TestResultEntity(BaseModel):
     """テスト結果を表すエンティティ（集約ルート）"""
     conversation_id: UUID
     test_number: int
@@ -98,7 +98,7 @@ class TestResult(BaseModel):
         return self.overall_score() >= TestConstants.PASSING_THRESHOLD
 
     @classmethod
-    def factory(cls, conversation_id: UUID, test_number: int,answers: List[Dict[str, str]]) -> 'TestResult':
+    def factory(cls, conversation_id: UUID, test_number: int,answers: List[Dict[str, str]]) -> 'TestResultEntity':
         """ユーザーの回答リストからテスト結果を作成する"""
         result = cls(
             conversation_id=conversation_id,

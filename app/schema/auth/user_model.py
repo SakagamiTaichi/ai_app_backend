@@ -3,6 +3,13 @@ from datetime import datetime, timezone
 from sqlalchemy import Column, String, Boolean, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from app.core.database import Base
+from sqlalchemy.orm import relationship
+from app.schema.practice.models import (
+    ConversationModel,
+    MessageModel,
+    ConversationTestScoreModel,
+    MessageTestScoreModel
+)
 
 class UserModel(Base):
     __tablename__ = "users"
@@ -13,3 +20,6 @@ class UserModel(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    # リレーションシップ
+    conversations = relationship("ConversationModel", back_populates="user")

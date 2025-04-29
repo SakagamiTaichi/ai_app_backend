@@ -5,7 +5,7 @@ import re
 from typing import List
 from app.domain.practice.conversation import ConversationEntity
 from app.domain.practice.practice_repository import PracticeRepository
-from app.domain.practice.test_result import MessageScore, TestResult
+from app.domain.practice.test_result import MessageScore, TestResultEntity
 from app.model.practice.practice import Conversation, ConversationResponse, ConversationsResponse, MessageResponse, MessageTestResult, MessageTestResultSummary, RecallTestRequest
 
 
@@ -160,7 +160,7 @@ class PracticeService:
             })
             
             # ドメインエンティティを作成
-            test_result = TestResult.factory(
+            test_result = TestResultEntity.factory(
                 conversation_id=request.conversation_id,
                 test_number=test_number,
                 answers=answers
