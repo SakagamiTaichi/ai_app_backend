@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 from uuid import UUID
 
-from app.domain.practice.conversation import ConversationEntity
-from app.domain.practice.test_result import TestResultEntity
-from app.model.practice.practice import Conversation, MessageResponse
+from app.domain.practice.conversation_entity import ConversationEntity
+from app.domain.practice.test_result_entity import TestResultEntity
+from app.model.practice.practice import  MessageResponse
 
 
 class PracticeRepository(ABC):
@@ -31,7 +31,7 @@ class PracticeRepository(ABC):
         pass
     
     @abstractmethod
-    async def create_conversation_set(self, conversation_set: Conversation) -> Conversation:
+    async def create_conversation_set(self, conversation_set: ConversationEntity) -> None:
         """会話セットを作成する"""
         pass
 

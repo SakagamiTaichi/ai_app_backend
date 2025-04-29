@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from app.core.dependencies.repositories import get_auth_repository, get_english_repository
 from app.domain.auth.auth_repository import AuthRepository
+from app.domain.practice.practice_api_repotiroy import PracticeApiRepository
 from app.domain.practice.practice_repository import PracticeRepository
 from app.services.auth.auth_service import AuthService
-from app.model.practice.practice import Conversation, ConversationResponse, ConversationsOrderRequest, ConversationsResponse, ConversationSetCreate, MessageResponse, MessageCreate, MessageTestResultSummary, RecallTestRequest
+from app.model.practice.practice import  ConversationResponse, ConversationsOrderRequest, ConversationsResponse, ConversationSetCreateRequest, MessageResponse, MessageCreate, MessageTestResultSummary, RecallTestRequest
 from app.services.practicce.practice_service import PracticeService
 
 router = APIRouter(prefix="/practice", tags=["practice"])
@@ -15,8 +16,8 @@ router = APIRouter(prefix="/practice", tags=["practice"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/auth/token")
 
 # サービスのインスタンス作成に依存性注入を使用
-def get_practice_service(repository: Annotated[PracticeRepository, Depends(get_english_repository)]) -> PracticeService:
-    return PracticeService(repository)
+def get_practice_service(dbRepository: Annotated[PracticeRepository, Depends(get_english_repository)],apiRepository : Annotated[PracticeApiRepository,Depends()]) -> PracticeService:
+    return PracticeService(dbRepository,apiRepository)
 
 def get_auth_service(repository: Annotated[AuthRepository, Depends(get_auth_repository)]) -> AuthService:
     return AuthService(repository)
@@ -65,8 +66,6 @@ async def get_conversation(
         return await chat_service.get_conversation(conversation_id, current_user.id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
     
 @router.post("/test_result", response_model=MessageTestResultSummary)
 async def post_test_results(
@@ -83,21 +82,37 @@ async def post_test_results(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-
-@router.post("/conversation", response_model=Conversation)
-async def create_conversations(
-    data: ConversationSetCreate,
+@router.post("/conversation/ai-registration")
+async def ai_registration(
+    data: ConversationSetCreateRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     chat_service: Annotated[PracticeService, Depends(get_practice_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
-) -> Conversation:
-    """新しい会話を作成する"""
+) -> ConversationResponse:
+    """AIによって会話を登録する"""
     try:
         # 現在のユーザー情報を取得
         current_user = await auth_service.get_current_user(token)
-        return await chat_service.create_conversation_set(data.title, current_user.id)
+        response = await chat_service.ai_registration(current_user.id, data)
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+# @router.post("/conversation", response_model=Conversation)
+# async def create_conversations(
+#     data: ConversationSetCreateRequest,
+#     token: Annotated[str, Depends(oauth2_scheme)],
+#     chat_service: Annotated[PracticeService, Depends(get_practice_service)],
+#     auth_service: Annotated[AuthService, Depends(get_auth_service)]
+# ) -> Conversation:
+#     """新しい会話を作成する"""
+#     try:
+#         # 現在のユーザー情報を取得
+#         current_user = await auth_service.get_current_user(token)
+#         return await chat_service.create_conversation_set(data.title, current_user.id)
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/message", response_model=MessageResponse)
 async def create_message(

@@ -24,8 +24,8 @@ class ConversationsResponse(BaseModel):
 class ConversationsOrderRequest(BaseModel):
     conversation_ids: List[UUID] = Field(..., description="会話セットID")
 
-class ConversationSetCreate(BaseModel):
-    title: str = Field(..., description="会話セットのタイトル")
+class ConversationSetCreateRequest(BaseModel):
+    user_phrase: str = Field(..., description="ユーザーのフレーズ")
 
 class MessageResponse(BaseModel):
     conversation_id: UUID = Field(..., description="set id")

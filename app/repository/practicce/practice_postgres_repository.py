@@ -5,10 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, desc
 from sqlalchemy.orm import selectinload
 
-from app.domain.practice.conversation import ConversationEntity
-from app.domain.practice.test_result import MessageScore, TestResultEntity
+from app.domain.practice.conversation_entity import ConversationEntity
+from app.domain.practice.test_result_entity import MessageScore, TestResultEntity
 from app.domain.practice.practice_repository import PracticeRepository
-from app.model.practice.practice import Conversation, MessageResponse
+from app.model.practice.practice import  MessageResponse
 from app.schema.practice.models import (
     ConversationModel,
     MessageModel,
@@ -134,22 +134,34 @@ class PracticePostgresRepository(PracticeRepository):
             print(f"Error creating message: {str(e)}")
             raise
     
-    async def create_conversation_set(self, conversation_set: Conversation) -> Conversation:
+    async def create_conversation_set(self, conversation_set: ConversationEntity) -> None:
         """会話セットを作成する"""
         try:
+            # 同時にメッセージも保存する
+            messages = [
+                MessageModel(
+                    conversation_id=message.conversation_id,
+                    message_order=message.message_order,
+                    speaker_number=message.speaker_number,
+                    message_en=message.message_en,
+                    message_ja=message.message_ja,
+                    created_at=message.created_at
+                )
+                for message in conversation_set.messages # type: ignore
+            ]
+
             new_conversation = ConversationModel(
                 id=conversation_set.id,
                 user_id=conversation_set.user_id,
                 title=conversation_set.title,
                 order=conversation_set.order,
-                created_at=conversation_set.created_at
+                created_at=conversation_set.created_at,
+                messages = messages
             )
-            
+
+
             self.db.add(new_conversation)
             await self.db.commit()
-            await self.db.refresh(new_conversation)
-            
-            return conversation_set
             
         except Exception as e:
             await self.db.rollback()
