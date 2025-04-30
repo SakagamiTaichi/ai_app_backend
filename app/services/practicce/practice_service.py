@@ -64,7 +64,7 @@ class PracticeService:
             message_en=message.message_en,
             created_at=message.created_at
                 )
-                for message in messages # type: ignore
+                for message in conversation_set.messages
             ]
         )
 

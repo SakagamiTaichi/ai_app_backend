@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, desc
 from sqlalchemy.orm import selectinload
 
-from app.domain.practice.conversation_entity import ConversationEntity
+from app.domain.practice.conversation_entity import ConversationEntity, MessageEntity
 from app.domain.practice.test_result_entity import MessageScore, TestResultEntity
 from app.domain.practice.practice_repository import PracticeRepository
 from app.model.practice.practice import  MessageResponse
@@ -28,6 +28,7 @@ class PracticePostgresRepository(PracticeRepository):
         try:
             result = await self.db.execute(
                 select(ConversationModel)
+                .options(selectinload(ConversationModel.messages))
                 .where(ConversationModel.user_id == user_id)
                 .order_by(desc(ConversationModel.created_at))
             )
@@ -42,7 +43,8 @@ class PracticePostgresRepository(PracticeRepository):
                     user_id=conversation.user_id, # type: ignore
                     title=conversation.title, # type: ignore
                     order=conversation.order, # type: ignore
-                    created_at=conversation.created_at # type: ignore
+                    created_at=conversation.created_at, # type: ignore
+                    messages=[]  # 空のリストを設定
                 )
                 for conversation in conversations
             ]

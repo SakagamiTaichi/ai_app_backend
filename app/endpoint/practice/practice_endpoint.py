@@ -2,7 +2,7 @@ from typing import Annotated
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from app.core.dependencies.repositories import get_auth_repository, get_english_repository
+from app.core.dependencies.repositories import get_auth_repository, get_english_api_repository, get_english_repository
 from app.domain.auth.auth_repository import AuthRepository
 from app.domain.practice.practice_api_repotiroy import PracticeApiRepository
 from app.domain.practice.practice_repository import PracticeRepository
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/practice", tags=["practice"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/auth/token")
 
 # サービスのインスタンス作成に依存性注入を使用
-def get_practice_service(dbRepository: Annotated[PracticeRepository, Depends(get_english_repository)],apiRepository : Annotated[PracticeApiRepository,Depends()]) -> PracticeService:
+def get_practice_service(dbRepository: Annotated[PracticeRepository, Depends(get_english_repository)],apiRepository : Annotated[PracticeApiRepository,Depends(get_english_api_repository)]) -> PracticeService:
     return PracticeService(dbRepository,apiRepository)
 
 def get_auth_service(repository: Annotated[AuthRepository, Depends(get_auth_repository)]) -> AuthService:
