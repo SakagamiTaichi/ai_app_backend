@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, desc
 from sqlalchemy.orm import selectinload
 
-from app.domain.practice.conversation_entity import ConversationEntity, MessageEntity
+from app.domain.practice.conversation_entity import ConversationEntity
 from app.domain.practice.test_result_entity import MessageScore, TestResultEntity
 from app.domain.practice.practice_repository import PracticeRepository
 from app.model.practice.practice import  MessageResponse

@@ -17,7 +17,7 @@ class PracticeService:
         self.apiRepository = apiRepository
 
             
-    async def ai_registration(self, user_id :str, request: ConversationSetCreateRequest) -> ConversationResponse:
+    async def ai_registration(self, user_id :str, request: ConversationSetCreateRequest) -> str:
         """AIによって会話を登録する"""
 
         # ユーザーの会話セットを取得
@@ -53,22 +53,7 @@ class PracticeService:
         
         # データベースに保存
         await self.dbRepository.create_conversation_set(conversation_set)
-
-        result_conversation = ConversationResponse(
-            messages=[
-                MessageResponse(
-            conversation_id=message.conversation_id,
-            message_order=message.message_order,
-            speaker_number=message.speaker_number,
-            message_ja=message.message_ja,
-            message_en=message.message_en,
-            created_at=message.created_at
-                )
-                for message in conversation_set.messages
-            ]
-        )
-
-        return result_conversation
+        return str(conversation_id)
         
 
     async def get_conversations(self, user_id: str) -> ConversationsResponse:

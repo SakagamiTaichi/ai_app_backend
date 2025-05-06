@@ -14,15 +14,14 @@ class PracticeApiOpenAiRepository(PracticeApiRepository):
 
     async def get_generated_conversation(self, user_phrase: str) -> GeneratedConversationValueObject:
         """AIによって生成された会話を取得する"""
-       
+        #  "1. Include 2-3 exchanges between speakers (conversation rounds)\n"
         prompt = ChatPromptTemplate.from_template(
             "Create a natural English conversation that includes the user's phrase\n"
             "The conversation should:\n"
-            "1. Include 2-3 exchanges between speakers (conversation rounds)\n"
-            "2. Represent how native English speakers would naturally talk\n"
-            "3. Include the target phrase in context, showing how it's commonly used\n"
-            "4. Be presented with both English text and Japanese translations\n"
-            "5. Here's an example of the format:\n"
+            "1. Represent how native English speakers would naturally talk\n"
+            "2. Include the target phrase in context, showing how it's commonly used\n"
+            "3. Be presented with both English text and Japanese translations\n"
+            "4. Here's an example of the format:\n"
             """{{
             "title": "ストレス解消法",
             "messages": [
