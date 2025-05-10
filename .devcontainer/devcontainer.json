@@ -5,7 +5,11 @@
   "workspaceFolder": "/workspace",
   "customizations": {
     "vscode": {
-      "extensions": ["ms-python.python", "ms-toolsai.jupyter"],
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "ms-python.black-formatter"
+      ],
       "settings": {
         "workbench.colorCustomizations": {
           "titleBar.activeBackground": "#19549C",
