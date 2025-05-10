@@ -9,8 +9,6 @@ retry
 decorator
 fastapi
 uvicorn
-supabase
-psycopg2[binary]
 pytz
 requests
 langchain-text-splitters

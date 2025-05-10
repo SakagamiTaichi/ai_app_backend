@@ -1,4 +1,5 @@
-FROM python:latest
+FROM python:3.12-slim-bookworm
+
 USER root
 
 RUN apt-get update && \
