@@ -19,23 +19,27 @@ from app.core.config import settings
 class ChatService:
     def __init__(self):
         self.llm = ChatOpenAI(
-            model=settings.OPENAI_MODEL,    
+            model=settings.OPENAI_MODEL,
             temperature=settings.TEMPERATURE,
-            streaming=True
+            streaming=True,
         )
 
         self.message_store: Dict[str, BaseChatMessageHistory] = {}
-        
+
         # Define system prompt for English teaching assistant
         SYSTEM_PROMPT = """You are an English chat AI."""
         # より詳細なプロンプトは元のコードと同じように記述できます
-        
+
         # プロンプトテンプレートの定義
-        self.prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content=SYSTEM_PROMPT),
-            MessagesPlaceholder(variable_name="chat_history"),
-            HumanMessagePromptTemplate.from_template("""Please responde to :{input}""")
-        ])
+        self.prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(content=SYSTEM_PROMPT),
+                MessagesPlaceholder(variable_name="chat_history"),
+                HumanMessagePromptTemplate.from_template(
+                    """Please responde to :{input}"""
+                ),
+            ]
+        )
 
     def get_session_history(self, session_id: str) -> BaseChatMessageHistory:
         """セッション用のチャット履歴を取得または作成する"""
@@ -46,35 +50,37 @@ class ChatService:
     def format_sse_message(self, data: str) -> str:
         """Server-Sent Events用にメッセージをフォーマットする"""
         return f"data: {json.dumps({'content': data})}\n\n"
-    
-    async def stream_response(self, user_input: str, session_id: str) -> AsyncGenerator[str, None]:
+
+    async def stream_response(
+        self, user_input: str, session_id: str
+    ) -> AsyncGenerator[str, None]:
         """会話履歴付きのストリーミングレスポンスを生成する"""
         try:
             # 1. まずプロンプトとLLMを組み合わせる（メッセージ形式を保持）
             prompt_and_llm = self.prompt | self.llm
-        
+
             # 2. 履歴管理を追加
             chain_with_history = RunnableWithMessageHistory(
-                prompt_and_llm,
+                prompt_and_llm,  # type: ignore
                 self.get_session_history,
                 input_messages_key="input",
                 history_messages_key="chat_history",
             )
-        
+
             # 3. 最後に文字列出力パーサーを追加
             final_chain = chain_with_history | StrOutputParser()
 
             # レスポンスをストリーミング
             async for chunk in final_chain.astream(
                 {"input": user_input},
-                config={"configurable": {"session_id": session_id}}
+                config={"configurable": {"session_id": session_id}},
             ):
                 if chunk:
                     time.sleep(0.05)  # レート制限
                     yield self.format_sse_message(chunk)
 
             yield "event: close\ndata: Stream ended\n\n"
-        
+
         except Exception as e:
             error_message = f"Error generating response: {str(e)}"
             yield self.format_sse_message(error_message)
@@ -90,8 +96,3 @@ class ChatService:
         except Exception as e:
             raise e
             # エラーハンドリング
-
-
-
-
-

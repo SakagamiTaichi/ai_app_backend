@@ -7,7 +7,12 @@ from app.domain.practice.conversation_entity import ConversationEntity, MessageE
 from app.domain.practice.practice_api_repotiroy import PracticeApiRepository
 from app.domain.practice.practice_repository import PracticeRepository
 from app.domain.practice.test_result_entity import MessageScore, TestResultEntity
-from app.model.practice.practice import Conversation, ConversationResponse, ConversationSetCreateRequest, ConversationsResponse, MessageResponse, MessageTestResult, MessageTestResultSummary, RecallTestRequest
+from app.model.practice.practice import Conversation, ConversationCreatedResponse, ConversationResponse, ConversationSetCreateRequest, ConversationsResponse, MessageResponse, MessageTestResult, MessageTestResultSummary, RecallTestRequest
+
+
+
+
+
 
 
 class PracticeService:
@@ -17,7 +22,7 @@ class PracticeService:
         self.apiRepository = apiRepository
 
             
-    async def ai_registration(self, user_id :str, request: ConversationSetCreateRequest) -> str:
+    async def ai_registration(self, user_id :str, request: ConversationSetCreateRequest) -> ConversationCreatedResponse:
         """AIによって会話を登録する"""
 
         # ユーザーの会話セットを取得
@@ -53,8 +58,8 @@ class PracticeService:
         
         # データベースに保存
         await self.dbRepository.create_conversation_set(conversation_set)
-        return str(conversation_id)
-        
+        # Pydanticモデルを返す
+        return ConversationCreatedResponse(id=conversation_id)
 
     async def get_conversations(self, user_id: str) -> ConversationsResponse:
         """ユーザーの会話一覧を取得する"""

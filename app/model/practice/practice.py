@@ -67,4 +67,8 @@ class MessageTestResultSummary(BaseModel):
     last_correct_rate: float | None = Field(..., description="前回の正解率")
     result : List[MessageTestResult] = Field(..., description="テスト結果")
 
+# app/model/practice/practice.py に追加
+class ConversationCreatedResponse(BaseModel):
+    id: UUID = Field(..., description="作成された会話のID")    
+
 
