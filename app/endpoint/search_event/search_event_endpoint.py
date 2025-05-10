@@ -1,5 +1,3 @@
-
-
 # from fastapi import APIRouter
 # from app.services.search_event.search_event_service import SearchEventService
 
@@ -9,4 +7,3 @@
 # async def search_event() -> str:
 #     result = await SearchEventService().get_search_event("test")
 #     return result
-

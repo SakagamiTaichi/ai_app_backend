@@ -12,33 +12,39 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 # OAuth2のパスワードベアラースキーム
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/auth/token")
 
+
 # サービスのインスタンス作成に依存性注入を使用
 def get_chat_service() -> ChatService:
     return ChatService()
 
-def get_auth_service(repository: Annotated[AuthRepository, Depends(get_auth_repository)]) -> AuthService:
+
+def get_auth_service(
+    repository: Annotated[AuthRepository, Depends(get_auth_repository)],
+) -> AuthService:
     return AuthService(repository)
+
 
 @router.get("/message")
 async def chat_stream(
     message: str,
     session_id: str,
     token: Annotated[str, Depends(oauth2_scheme)],
-    chat_service: Annotated[ChatService, Depends(get_chat_service)]
+    chat_service: Annotated[ChatService, Depends(get_chat_service)],
 ) -> StreamingResponse:
     """チャットのストリーミングレスポンスを取得する"""
     try:
         return StreamingResponse(
             chat_service.stream_response(message, session_id),
-            media_type="text/event-stream"
+            media_type="text/event-stream",
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/messages")
 async def chat_messages(
     token: Annotated[str, Depends(oauth2_scheme)],
-    chat_service: Annotated[ChatService, Depends(get_chat_service)]
+    chat_service: Annotated[ChatService, Depends(get_chat_service)],
 ) -> None:
     """チャットの会話を保存する。"""
     try:
@@ -48,5 +54,3 @@ async def chat_messages(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-

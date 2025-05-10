@@ -1,18 +1,23 @@
-
 from langchain_core.language_models.chat_models import (
     BaseChatModel,
 )
-from app.domain.practice.geneerated_conversation_value_object import GeneratedConversationValueObject, GeneratedMessageValueObject
+from app.domain.practice.geneerated_conversation_value_object import (
+    GeneratedConversationValueObject,
+    GeneratedMessageValueObject,
+)
 from app.domain.practice.practice_api_repotiroy import PracticeApiRepository
 from langchain_core.prompts import ChatPromptTemplate
 
+
 class PracticeApiOpenAiRepository(PracticeApiRepository):
     """PostgreSQLを使用した練習機能のリポジトリ実装"""
-    
-    def __init__(self,llm : BaseChatModel):
-        self.llm: BaseChatModel  = llm
 
-    async def get_generated_conversation(self, user_phrase: str) -> GeneratedConversationValueObject:
+    def __init__(self, llm: BaseChatModel):
+        self.llm: BaseChatModel = llm
+
+    async def get_generated_conversation(
+        self, user_phrase: str
+    ) -> GeneratedConversationValueObject:
         """AIによって生成された会話を取得する"""
         #  "1. Include 2-3 exchanges between speakers (conversation rounds)\n"
         prompt = ChatPromptTemplate.from_template(
@@ -47,19 +52,20 @@ class PracticeApiOpenAiRepository(PracticeApiRepository):
               }}
             ]
             }}"""
-            "user's phrase: {user_phrase}")
-        
-        chain = prompt | self.llm.with_structured_output(GeneratedConversationValueObject)
+            "user's phrase: {user_phrase}"
+        )
+
+        chain = prompt | self.llm.with_structured_output(
+            GeneratedConversationValueObject
+        )
         generated_conversation = chain.invoke({"user_phrase": user_phrase})
 
-
         return GeneratedConversationValueObject(
-            title=generated_conversation.title, # type: ignore
+            title=generated_conversation.title,  # type: ignore
             messages=[
                 GeneratedMessageValueObject(
-                    message_en=message.message_en,
-                    message_ja=message.message_ja
+                    message_en=message.message_en, message_ja=message.message_ja
                 )
-                for message in generated_conversation.messages # type: ignore
-            ]
+                for message in generated_conversation.messages  # type: ignore
+            ],
         )

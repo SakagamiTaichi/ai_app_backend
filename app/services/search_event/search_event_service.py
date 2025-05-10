@@ -1,7 +1,7 @@
 # from unittest import result
 # from langgraph.checkpoint.memory import MemorySaver
 # from open_deep_research.graph import builder
-# import uuid 
+# import uuid
 # from app.core.config import settings
 # from langgraph.types import Command
 # from pydantic import BaseModel, Field
@@ -56,13 +56,13 @@
 #             thread,
 #             stream_mode="updates",
 #         )
-        
+
 #         # 最終的なレポートを取得
 #         final_result = await graph.ainvoke(
 #             Command(resume=True),
 #             thread,
 #         )
-        
+
 #         raw_report = ""
 #         if isinstance(final_result, dict) and 'final_report' in final_result:
 #             raw_report = final_result['final_report']
@@ -71,24 +71,24 @@
 #             for key in final_result:
 #                 if isinstance(final_result[key], dict) and 'final_report' in final_result[key]:
 #                     raw_report = final_result[key]['final_report']
-        
+
 #         # 生のレポートからPydanticモデルにパース
 #         prompt = ChatPromptTemplate.from_template(
 #             """
 #             以下のレポートから、HANAという日本の音楽ガールズグループに関する情報を構造化データとして抽出してください。
 #             イベント情報とメディア掲載情報を分けて整理してください。
-            
+
 #             レポート:
 #             {report}
-            
+
 #             必要な出力形式は以下の通りです:
 #             - events: イベント情報のリスト（名前、日付、場所、概要）
 #             - media_coverage: メディア掲載情報のリスト（掲載メディア、掲載日、URL、概要）
 #             """
 #         )
-        
+
 #         # 構造化出力を取得
 #         chain = prompt | self.llm.with_structured_output(HANAEventData)
 #         structured_data = await chain.ainvoke({"report": raw_report})
-        
+
 #         return structured_data

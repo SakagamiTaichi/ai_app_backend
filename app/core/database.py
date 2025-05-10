@@ -7,12 +7,11 @@ from app.core.config import settings
 engine = create_async_engine(settings.ASYNC_DATABASE_URL, echo=True)
 
 # 非同期セッションを生成するためのファクトリーを作成
-async_session = async_sessionmaker(
-    engine, class_=AsyncSession, expire_on_commit=False
-)
+async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 # SQLAlchemyのORMモデルを定義するための基底クラス
 Base = declarative_base()
+
 
 # FastAPIのルートハンドラーに注入されるデータベースセッションを提供
 async def get_db():
