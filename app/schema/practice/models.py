@@ -79,6 +79,7 @@ class MessageTestScoreModel(Base):
     test_number = Column(Integer, primary_key=True)
     message_order = Column(Integer, primary_key=True)
     score = Column(Float, nullable=False)
+    user_answer = Column(String, nullable=False)  # P7653
 
     __table_args__ = (
         ForeignKeyConstraint(

@@ -193,6 +193,7 @@ class PracticePostgresRepository(PracticeRepository):
                     test_number=test_result.test_number,
                     message_order=score.message_order,
                     score=score.score,
+                    user_answer=score.user_answer,  # Save user answer
                 )
                 self.db.add(message_score)
 
@@ -238,7 +239,7 @@ class PracticePostgresRepository(PracticeRepository):
                         message_order=item.message_order,
                         score=item.score,
                         is_correct=item.score >= 90.0,
-                        user_answer="",  # データベースには保存されていない
+                        user_answer=item.user_answer,  # Retrieve user answer
                         correct_answer=msg.message_en,  # type: ignore
                     )
                     message_scores.append(score)
