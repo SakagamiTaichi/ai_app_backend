@@ -9,8 +9,8 @@ import difflib
 class TestConstants:
     """テストの定数"""
 
-    CORRECT_THRESHOLD = 90.0  # 一つのメッセージが正解と判定される閾値
-    PASSING_THRESHOLD = 80.0  # テスト全体の合格閾値
+    CORRECT_THRESHOLD: int = 90  # 一つのメッセージが正解と判定される閾値
+    PASSING_THRESHOLD: int = 80  # テスト全体の合格閾値
 
 
 class MessageScore(BaseModel):
@@ -55,11 +55,13 @@ class MessageScore(BaseModel):
         return matcher.get_opcodes()
 
     @computed_field
+    @property
     def get_tokenized_user_answer(self) -> List[str]:
         """ユーザーの回答をトークン化して返す"""
         return self.tokenize(self.user_answer)
 
     @computed_field
+    @property
     def get_tokenized_correct_answer(self) -> List[str]:
         """正解の回答をトークン化して返す"""
         return self.tokenize(self.correct_answer)
@@ -84,7 +86,7 @@ class TestResultEntity(BaseModel):
 
     conversation_id: UUID
     test_number: int
-    message_scores: List[MessageScore] = Field(ge=1, default_factory=list)
+    message_scores: List[MessageScore] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.now)
 
     @field_validator("message_scores", mode="before")
@@ -95,7 +97,8 @@ class TestResultEntity(BaseModel):
         return value
 
     @computed_field
-    def overall_score(self) -> float:
+    @property
+    def overall_score(self) -> int:
         """全体のスコアを計算する"""
         if not self.message_scores:
             return 0
@@ -105,9 +108,10 @@ class TestResultEntity(BaseModel):
         )
 
     @computed_field
+    @property
     def is_passing(self) -> bool:
         """合格判定（80%以上で合格）"""
-        return self.overall_score() >= TestConstants.PASSING_THRESHOLD
+        return self.overall_score >= TestConstants.PASSING_THRESHOLD
 
     @classmethod
     def factory(

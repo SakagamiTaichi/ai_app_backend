@@ -257,8 +257,8 @@ class PracticeService:
             for score in test_result.message_scores:
                 # ユーザーの解答と正解をHTMLとしてフォーマット
                 user_html, correct_html = self._generate_diff_html(
-                    score.get_tokenized_user_answer(),
-                    score.get_tokenized_correct_answer(),
+                    score.get_tokenized_user_answer,
+                    score.get_tokenized_correct_answer,
                 )
 
                 # 前回のスコアを検索
@@ -280,9 +280,9 @@ class PracticeService:
                 )
 
             return MessageTestResultSummary(
-                correct_rate=test_result.overall_score(),
+                correct_rate=test_result.overall_score,
                 last_correct_rate=(
-                    last_test_result.overall_score() if last_test_result else None
+                    last_test_result.overall_score if last_test_result else None
                 ),
                 result=result_items,
             )
