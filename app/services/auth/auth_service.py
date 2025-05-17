@@ -1,3 +1,5 @@
+from pydantic import ValidationError
+from app.core.exception.app_exception import BadRequestError
 from app.domain.auth.auth_repository import AuthRepository
 from app.domain.auth.login_information_value_object import LoginInformationValueObject
 from app.model.auth.auth import TokenResponse, UserResponse
@@ -17,7 +19,11 @@ class AuthService:
             return UserResponse(
                 id=entity.id, email=entity.email, is_active=entity.is_active
             )
+        except ValidationError as e:
+            # バリデーションエラーの処理
+            raise BadRequestError(detail=e.title)
         except Exception as e:
+            # エラーハンドリング
             raise
 
     async def signin(self, email: str, password: str) -> TokenResponse:
@@ -32,7 +38,11 @@ class AuthService:
                 refresh_token=valueObject.refresh_token.refresh_token,
                 token_type=valueObject.token_type,
             )
+        except ValidationError as e:
+            # バリデーションエラーの処理
+            raise BadRequestError(detail=e.title)
         except Exception as e:
+            # エラーハンドリング
             raise
 
     async def refresh_token(self, refresh_token: str) -> TokenResponse:
@@ -44,7 +54,11 @@ class AuthService:
                 refresh_token=valueObject.refresh_token.refresh_token,
                 token_type=valueObject.token_type,
             )
+        except ValidationError as e:
+            # バリデーションエラーの処理
+            raise BadRequestError(detail=e.title)
         except Exception as e:
+            # エラーハンドリング
             raise
 
     async def get_current_user(self, token: str) -> UserResponse:
@@ -54,5 +68,9 @@ class AuthService:
             return UserResponse(
                 id=entity.id, email=entity.email, is_active=entity.is_active
             )
+        except ValidationError as e:
+            # バリデーションエラーの処理
+            raise BadRequestError(detail=e.title)
         except Exception as e:
+            # エラーハンドリング
             raise

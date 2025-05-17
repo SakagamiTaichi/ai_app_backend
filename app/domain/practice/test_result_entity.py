@@ -1,9 +1,12 @@
 from datetime import datetime
 from uuid import UUID
 from typing import List, Dict
-from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
+from pydantic import BaseModel, Field, computed_field, field_validator
 import re
 import difflib
+from app.core.exception.app_exception import (
+    BadRequestError,
+)
 
 
 class TestConstants:
@@ -22,13 +25,15 @@ class MessageScore(BaseModel):
     user_answer: str
     correct_answer: str
 
-    @model_validator(mode="after")
-    def validate_score(self):
-        if self.is_correct and self.score < TestConstants.CORRECT_THRESHOLD:
-            raise ValueError(
-                "正解のスコアが {} 未満です".format(TestConstants.CORRECT_THRESHOLD)
-            )
-        return self
+    # @model_validator(mode="after")
+    # def validate_score(self):
+    #     if self.is_correct and self.score < TestConstants.CORRECT_THRESHOLD:
+    #         raise BadRequestError(
+    #             detail="正解のスコアが {} 未満です".format(
+    #                 TestConstants.CORRECT_THRESHOLD
+    #             )
+    #         )
+    #     return self
 
     @staticmethod
     def tokenize(text: str) -> List[str]:
@@ -93,7 +98,7 @@ class TestResultEntity(BaseModel):
     @classmethod
     def validate_message_scores(cls, value: List[MessageScore]):
         if not value:
-            raise ValueError("メッセージスコアは1つ以上必要です")
+            raise BadRequestError(detail="メッセージスコアは1つ以上必要です")
         return value
 
     @computed_field

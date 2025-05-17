@@ -70,14 +70,12 @@ async def reorder_conversations(
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> None:
     """会話セットの順序を変更する"""
-    try:
-        # 現在のユーザー情報を取得
-        current_user = await auth_service.get_current_user(token)
-        return await practice_service.reorder_conversations(
-            current_user.id, data.conversation_ids
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
+    # 現在のユーザー情報を取得
+    current_user = await auth_service.get_current_user(token)
+    return await practice_service.reorder_conversations(
+        current_user.id, data.conversation_ids
+    )
 
 
 @router.get("/conversation/{conversation_id}")

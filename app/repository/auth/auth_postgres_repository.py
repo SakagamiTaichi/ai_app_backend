@@ -1,5 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from app.core.exception.app_exception import (
+    ConflictError,
+    NotFoundError,
+    UnauthorizedError,
+)
 from app.core.security import SecurityUtils
 from app.domain.auth.auth_repository import AuthRepository
 from app.domain.auth.login_information_value_object import LoginInformationValueObject
@@ -7,12 +12,6 @@ from app.domain.auth.refresh_token_value_object import RefreshTokenValueObject
 from app.domain.auth.token_value_object import TokenValueObject
 from app.domain.auth.user_entity import UserEntity
 from app.schema.auth.user_model import UserModel
-from app.exception.auth.auth_exception import (
-    AuthenticationException,
-    FailedToCreateUserException,
-    UserAlreadyExistsException,
-)
-from fastapi import HTTPException, status
 
 
 class AuthPostgresRepository(AuthRepository):
@@ -32,7 +31,7 @@ class AuthPostgresRepository(AuthRepository):
             existing_user = result.scalar_one_or_none()
 
             if existing_user:
-                raise UserAlreadyExistsException(email)
+                raise ConflictError(detail="このメールアドレスは既に使用されています。")
 
             # パスワードのハッシュ化
             hashed_password = SecurityUtils.get_password_hash(password)
@@ -52,11 +51,9 @@ class AuthPostgresRepository(AuthRepository):
                 is_active=bool(new_user.is_active),
             )
 
-        except UserAlreadyExistsException:
-            raise
         except Exception as e:
             await self.db.rollback()
-            raise FailedToCreateUserException()
+            raise
 
     async def signin(self, loginInfo: LoginInformationValueObject) -> TokenValueObject:
         """ユーザーをサインインさせる"""
@@ -70,7 +67,9 @@ class AuthPostgresRepository(AuthRepository):
             if not user or not SecurityUtils.verify_password(
                 loginInfo.password, str(user.hashed_password)
             ):
-                raise AuthenticationException()
+                raise UnauthorizedError(
+                    detail="メールアドレスまたはパスワードが誤っています。"
+                )
 
             # トークンの生成
             access_token = SecurityUtils.create_access_token({"sub": str(user.id)})
@@ -82,20 +81,15 @@ class AuthPostgresRepository(AuthRepository):
                 token_type="bearer",
             )
 
-        except AuthenticationException:
-            raise
         except Exception as e:
-            raise AuthenticationException()
+            raise
 
     async def refresh_token(self, refresh_token: str) -> TokenValueObject:
         """リフレッシュトークンを使用して新しいアクセストークンを取得する"""
         try:
             payload = SecurityUtils.decode_token(refresh_token)
             if not payload or payload.get("type") != "refresh":
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="無効なリフレッシュトークンです",
-                )
+                raise UnauthorizedError(detail="無効なリフレッシュトークンです。")
 
             user_id = payload.get("sub")
 
@@ -109,13 +103,8 @@ class AuthPostgresRepository(AuthRepository):
                 token_type="bearer",
             )
 
-        except HTTPException:
-            raise
         except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"トークンリフレッシュエラー: {str(e)}",
-            )
+            raise
 
     async def get_user(self, user_id: str) -> UserEntity:
         """ユーザー情報を取得する"""
@@ -126,39 +115,24 @@ class AuthPostgresRepository(AuthRepository):
             user = result.scalar_one_or_none()
 
             if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="ユーザーが見つかりません",
-                )
+                raise NotFoundError(detail="指定されたユーザーは存在しません。")
 
             return UserEntity(
                 id=str(user.id), email=str(user.email), is_active=bool(user.is_active)
             )
 
-        except HTTPException:
-            raise
         except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"ユーザー情報取得エラー: {str(e)}",
-            )
+            raise
 
     async def get_current_user(self, access_token: str) -> UserEntity:
         """現在のユーザー情報を取得する"""
         try:
             payload = SecurityUtils.decode_token(access_token)
             if not payload or payload.get("type") != "access":
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="無効なトークンです",
-                )
+                raise UnauthorizedError(detail="無効なアクセストークンです。")
 
             user_id = payload.get("sub")
             return await self.get_user(str(user_id))
 
-        except HTTPException:
-            raise
         except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail=f"認証エラー: {str(e)}"
-            )
+            raise

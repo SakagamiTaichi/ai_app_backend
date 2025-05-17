@@ -3,6 +3,13 @@ from typing import List
 from uuid import UUID, uuid4
 import re
 from typing import List
+
+from pydantic import ValidationError
+from app.core.exception.app_exception import (
+    BadRequestError,
+    ConflictError,
+    NotFoundError,
+)
 from app.domain.practice.conversation_entity import ConversationEntity, MessageEntity
 from app.domain.practice.practice_api_repotiroy import PracticeApiRepository
 from app.domain.practice.practice_repository import PracticeRepository
@@ -32,104 +39,128 @@ class PracticeService:
         self, user_id: str, request: ConversationSetCreateRequest
     ) -> ConversationCreatedResponse:
         """AIによって会話を登録する"""
+        try:
+            # ユーザーの会話セットを取得
+            conversation_set = await self.dbRepository.get_conversations(user_id)
 
-        # ユーザーの会話セットを取得
-        conversation_set = await self.dbRepository.get_conversations(user_id)
+            # 全ての会話セットの中から最大の順番を設定する
+            order = conversation_set[0].order + 1 if conversation_set else 0
 
-        # 全ての会話セットの中から最大の順番を設定する
-        order = conversation_set[0].order + 1 if conversation_set else 0
+            # AIによるメッセージ一覧の取得
+            valueObject = await self.apiRepository.get_generated_conversation(
+                request.user_phrase
+            )
 
-        # AIによるメッセージ一覧の取得
-        valueObject = await self.apiRepository.get_generated_conversation(
-            request.user_phrase
-        )
+            conversation_id = uuid4()
+            now = datetime.now()
 
-        conversation_id = uuid4()
-        now = datetime.now()
+            conversation_set = ConversationEntity(
+                id=conversation_id,
+                user_id=UUID(user_id),
+                title=valueObject.title,
+                order=order,
+                created_at=now,
+                messages=[
+                    MessageEntity(
+                        conversation_id=conversation_id,
+                        message_order=i + 1,
+                        speaker_number=i % 2,
+                        message_en=message.message_en,
+                        message_ja=message.message_ja,
+                        created_at=now,
+                    )
+                    for i, message in enumerate(valueObject.messages)  # type: ignore
+                ],
+            )
 
-        conversation_set = ConversationEntity(
-            id=conversation_id,
-            user_id=UUID(user_id),
-            title=valueObject.title,
-            order=order,
-            created_at=now,
-            messages=[
-                MessageEntity(
-                    conversation_id=conversation_id,
-                    message_order=i + 1,
-                    speaker_number=i % 2,
-                    message_en=message.message_en,
-                    message_ja=message.message_ja,
-                    created_at=now,
-                )
-                for i, message in enumerate(valueObject.messages)  # type: ignore
-            ],
-        )
-
-        # データベースに保存
-        await self.dbRepository.create_conversation_set(conversation_set)
-        # Pydanticモデルを返す
-        return ConversationCreatedResponse(id=conversation_id)
+            # データベースに保存
+            await self.dbRepository.create_conversation_set(conversation_set)
+            # Pydanticモデルを返す
+            return ConversationCreatedResponse(id=conversation_id)
+        except ValidationError as e:
+            # バリデーションエラーの処理
+            raise BadRequestError(detail=e.title)
+        except Exception as e:
+            # エラーハンドリング
+            raise
 
     async def get_conversations(self, user_id: str) -> ConversationsResponse:
         """ユーザーの会話一覧を取得する"""
-
-        entities: List[ConversationEntity] = await self.dbRepository.get_conversations(
-            user_id
-        )
-
-        conversations = [
-            Conversation(
-                id=entity.id,
-                user_id=entity.user_id,
-                title=entity.title,
-                order=entity.order,
-                created_at=entity.created_at,
+        try:
+            # ユーザーの会話一覧を取得
+            entities: List[ConversationEntity] = (
+                await self.dbRepository.get_conversations(user_id)
             )
-            for entity in entities
-        ]
-        # ConversationResponseを作成して返す
-        return ConversationsResponse(conversations=conversations)
+            conversations = [
+                Conversation(
+                    id=entity.id,
+                    user_id=entity.user_id,
+                    title=entity.title,
+                    order=entity.order,
+                    created_at=entity.created_at,
+                )
+                for entity in entities
+            ]
+            # ConversationResponseを作成して返す
+            return ConversationsResponse(conversations=conversations)
+        except ValidationError as e:
+            # バリデーションエラーの処理
+            raise BadRequestError(detail=e.title)
+        except Exception as e:
+            # エラーハンドリング
+            raise
 
     async def reorder_conversations(
         self, user_id: str, conversation_ids: List[UUID]
     ) -> None:
-        """会話セットの順序を変更する"""
-        # ユーザーの会話一覧を取得
-        conversations = await self.dbRepository.get_conversations(user_id)
+        try:
+            # ユーザーの会話一覧を取得
+            conversations = await self.dbRepository.get_conversations(user_id)
 
-        # 指定された会話セットがユーザーの会話セットに存在するか確認
-        for conversation_id in conversation_ids:
-            if not any(
-                conversation.id == conversation_id for conversation in conversations
-            ):
-                raise ValueError(
-                    f"会話セット {conversation_id} はユーザーの会話セットに存在しません"
-                )
-
-        # 各会話セットの新しい順序を設定
-        await self.dbRepository.reorder_conversations(user_id, conversation_ids)
+            # 指定された会話セットがユーザーの会話セットに存在するか確認
+            for conversation_id in conversation_ids:
+                if not any(
+                    conversation.id == conversation_id for conversation in conversations
+                ):
+                    raise NotFoundError(
+                        detail=f"指定された会話はユーザーの会話セットに存在しません"
+                    )
+            # 各会話セットの新しい順序を設定
+            await self.dbRepository.reorder_conversations(user_id, conversation_ids)
+        except ValidationError as e:
+            # バリデーションエラーの処理
+            raise BadRequestError(detail=e.title)
+        except Exception as e:
+            # エラーハンドリング
+            raise
 
     async def get_conversation(
         self, conversation_id: UUID, user_id: str
     ) -> ConversationResponse:
         """会話セットのメッセージ一覧を取得する"""
-        entities: List[MessageResponse] = await self.dbRepository.get_conversation(
-            conversation_id, user_id
-        )
-        messages = [
-            MessageResponse(
-                conversation_id=entity.conversation_id,
-                message_order=entity.message_order,
-                speaker_number=entity.speaker_number,
-                message_en=entity.message_en,
-                message_ja=entity.message_ja,
-                created_at=entity.created_at,
+        try:
+            entities: List[MessageResponse] = await self.dbRepository.get_conversation(
+                conversation_id, user_id
             )
-            for entity in entities
-        ]
-        # ConversationResponseを作成して返す
-        return ConversationResponse(messages=messages)
+            messages = [
+                MessageResponse(
+                    conversation_id=entity.conversation_id,
+                    message_order=entity.message_order,
+                    speaker_number=entity.speaker_number,
+                    message_en=entity.message_en,
+                    message_ja=entity.message_ja,
+                    created_at=entity.created_at,
+                )
+                for entity in entities
+            ]
+            # ConversationResponseを作成して返す
+            return ConversationResponse(messages=messages)
+        except ValidationError as e:
+            # バリデーションエラーの処理
+            raise BadRequestError(detail=e.title)
+        except Exception as e:
+            # エラーハンドリング
+            raise
 
     # async def create_conversation_set(self, title: str, user_id: str) -> None:
     #     """新しい会話セットを作成する"""
@@ -228,7 +259,9 @@ class PracticeService:
 
             # 取得した会話セットとユーザーの会話セットのorderが完全一致するかを確認。しない場合はエラーを返す
             if len(conversation) != len(request.answers):
-                raise ValueError("会話セットのメッセージ数と回答数が一致しません")
+                raise ConflictError(
+                    detail="会話セットのメッセージ数と回答数が一致しません"
+                )
 
             # 取得してきた会話セットとリクエストのメッセージからanswersを作成
             answers = []
@@ -287,6 +320,9 @@ class PracticeService:
                 result=result_items,
             )
 
+        except ValidationError as e:
+            # バリデーションエラーの処理
+            raise BadRequestError(detail=e.title)
         except Exception as e:
-            print(f"Error processing test results: {str(e)}")
+            # エラーハンドリング
             raise

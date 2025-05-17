@@ -48,7 +48,6 @@ class PracticePostgresRepository(PracticeRepository):
             ]
 
         except Exception as e:
-            print(f"Error fetching conversations: {str(e)}")
             raise
 
     async def reorder_conversations(
@@ -68,7 +67,6 @@ class PracticePostgresRepository(PracticeRepository):
 
         except Exception as e:
             await self.db.rollback()
-            print(f"Error reordering conversations: {str(e)}")
             raise
 
     async def get_conversation(
@@ -108,10 +106,7 @@ class PracticePostgresRepository(PracticeRepository):
                 for message in messages
             ]
 
-        except HTTPException:
-            raise
         except Exception as e:
-            print(f"Error fetching messages: {str(e)}")
             raise
 
     async def create_message(self, message: MessageResponse) -> MessageResponse:
@@ -134,7 +129,6 @@ class PracticePostgresRepository(PracticeRepository):
 
         except Exception as e:
             await self.db.rollback()
-            print(f"Error creating message: {str(e)}")
             raise
 
     async def create_conversation_set(
@@ -169,7 +163,6 @@ class PracticePostgresRepository(PracticeRepository):
 
         except Exception as e:
             await self.db.rollback()
-            print(f"Error creating conversation set: {str(e)}")
             raise
 
     async def save_test_result(self, test_result: TestResultEntity) -> TestResultEntity:
@@ -202,7 +195,6 @@ class PracticePostgresRepository(PracticeRepository):
 
         except Exception as e:
             await self.db.rollback()
-            print(f"Error saving test results: {str(e)}")
             raise
 
     async def get_latest_test_result(
@@ -253,5 +245,4 @@ class PracticePostgresRepository(PracticeRepository):
             )
 
         except Exception as e:
-            print(f"Error fetching last test result: {str(e)}")
             return None
