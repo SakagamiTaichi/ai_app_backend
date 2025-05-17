@@ -56,7 +56,7 @@ class ConflictError(AppException):
 class InternalServerError(AppException):
     """内部サーバーエラー"""
 
-    def __init__(self, detail: str = "エラーが発生しました。"):
+    def __init__(self, detail: str = "サーバーエラーが発生しました。"):
         super().__init__(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail
         )

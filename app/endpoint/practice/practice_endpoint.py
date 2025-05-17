@@ -86,12 +86,9 @@ async def get_conversation(
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> ConversationResponse:
     """特定の会話を取得する"""
-    try:
-        # 現在のユーザー情報を取得
-        current_user = await auth_service.get_current_user(token)
-        return await chat_service.get_conversation(conversation_id, current_user.id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # 現在のユーザー情報を取得
+    current_user = await auth_service.get_current_user(token)
+    return await chat_service.get_conversation(conversation_id, current_user.id)
 
 
 @router.post("/test_result", response_model=MessageTestResultSummary)
@@ -102,12 +99,9 @@ async def post_test_results(
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> MessageTestResultSummary:
     """ログインユーザーのテスト結果を取得する"""
-    try:
-        # 現在のユーザー情報を取得
-        current_user = await auth_service.get_current_user(token)
-        return await chat_service.post_test_results(current_user.id, request)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # 現在のユーザー情報を取得
+    current_user = await auth_service.get_current_user(token)
+    return await chat_service.post_test_results(current_user.id, request)
 
 
 @router.post("/conversation/ai-registration")
@@ -118,13 +112,10 @@ async def ai_registration(
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> ConversationCreatedResponse:
     """AIによって会話を登録する"""
-    try:
-        # 現在のユーザー情報を取得
-        current_user = await auth_service.get_current_user(token)
-        response = await chat_service.ai_registration(current_user.id, data)
-        return response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # 現在のユーザー情報を取得
+    current_user = await auth_service.get_current_user(token)
+    response = await chat_service.ai_registration(current_user.id, data)
+    return response
 
 
 # @router.post("/conversation", response_model=Conversation)
@@ -149,13 +140,10 @@ async def create_message(
     chat_service: Annotated[PracticeService, Depends(get_practice_service)],
 ) -> MessageResponse:
     """新しいメッセージを作成する"""
-    try:
-        return await chat_service.create_message(
-            data.conversation_id,
-            data.message_order,
-            data.speaker_number,
-            data.message_en,
-            data.message_ja,
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return await chat_service.create_message(
+        data.conversation_id,
+        data.message_order,
+        data.speaker_number,
+        data.message_en,
+        data.message_ja,
+    )

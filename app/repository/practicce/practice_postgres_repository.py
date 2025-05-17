@@ -245,4 +245,4 @@ class PracticePostgresRepository(PracticeRepository):
             )
 
         except Exception as e:
-            return None
+            raise
