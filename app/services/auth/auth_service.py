@@ -1,5 +1,5 @@
 from pydantic import ValidationError
-from app.core.exception.app_exception import BadRequestError
+from app.core.app_exception import BadRequestError
 from app.domain.auth.auth_repository import AuthRepository
 from app.domain.auth.login_information_value_object import LoginInformationValueObject
 from app.model.auth.auth import TokenResponse, UserResponse

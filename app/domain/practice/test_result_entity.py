@@ -4,9 +4,8 @@ from typing import List, Dict
 from pydantic import BaseModel, Field, computed_field, field_validator
 import re
 import difflib
-from app.core.exception.app_exception import (
-    BadRequestError,
-)
+
+from app.core.app_exception import BadRequestError
 
 
 class TestConstants:

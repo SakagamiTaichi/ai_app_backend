@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.core.exception.app_exception import setup_exception_handlers
+from app.core.app_exception import setup_exception_handlers
 from app.endpoint.health_check import health_check
 
 # from app.endpoint.search_event import search_event_endpoint
