@@ -24,3 +24,17 @@ class UserModel(Base):
 
     # リレーションシップ
     conversations = relationship("ConversationModel", back_populates="user")
+    learning_histories = relationship("LearningHistoryModel", back_populates="user")
+
+
+class VerificationCodeModel(Base):
+    __tablename__ = "verification_codes"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email = Column(String, nullable=False, index=True)
+    code = Column(String(6), nullable=False)
+    is_used = Column(Boolean, default=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )

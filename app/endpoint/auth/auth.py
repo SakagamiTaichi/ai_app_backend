@@ -2,13 +2,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from app.core.dependencies.repositories import get_auth_repository
+from app.core.dependencies.repositories import get_auth_repository, get_mail_repository
 from app.domain.auth.auth_repository import AuthRepository
+from app.domain.email.emai_repository import EmailRepository
 from app.model.auth.auth import (
     TokenResponse,
     UserCreateRequest,
     UserLoginRequest,
     UserResponse,
+    VerificationCodeRequest,
+    VerificationCodeResponse,
 )
 from app.services.auth.auth_service import AuthService
 
@@ -22,8 +25,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/auth/token")
 # サービスのインスタンス作成に依存性注入を使用
 def get_auth_service(
     repository: Annotated[AuthRepository, Depends(get_auth_repository)],
+    mailRepository: Annotated[EmailRepository, Depends(get_mail_repository)],
 ) -> AuthService:
-    return AuthService(repository)
+    return AuthService(repository=repository, mailRepository=mailRepository)
 
 
 @router.post(
@@ -32,9 +36,11 @@ def get_auth_service(
 async def signup(
     user_data: UserCreateRequest,
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
-) -> UserResponse:
+) -> TokenResponse:
     """新規ユーザー登録"""
-    return await auth_service.signup(user_data.email, user_data.password)
+    return await auth_service.signup(
+        user_data.email, user_data.password, user_data.code
+    )
 
 
 @router.post("/token", response_model=TokenResponse)
@@ -71,3 +77,22 @@ async def get_current_user(
 ) -> UserResponse:
     """現在のユーザー情報を取得"""
     return await auth_service.get_current_user(token)
+
+
+@router.post("/send-verification-code", response_model=VerificationCodeResponse)
+async def send_verification_code(
+    request: VerificationCodeRequest,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+) -> VerificationCodeResponse:
+    """認証コードを送信する"""
+    result = await auth_service.send_verification_code(request.email)
+    return result
+
+
+# @router.post("/signin-with-code", response_model=TokenResponse)
+# async def signup_with_code(
+#     request: SignUpWithCodeRequest,
+#     auth_service: Annotated[AuthService, Depends(get_auth_service)],
+# ) -> TokenResponse:
+#     """認証コードでサインイン"""
+#     return await auth_service.signup_with_code(request.email, request.code)

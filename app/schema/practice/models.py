@@ -93,3 +93,20 @@ class MessageTestScoreModel(Base):
 
     # リレーションシップ
     test = relationship("ConversationTestScoreModel", back_populates="message_scores")
+
+
+class LearningHistoryModel(Base):
+    __tablename__ = "en_learning_histories"
+
+    date = Column(DateTime(timezone=True), nullable=False, primary_key=True)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True,
+        primary_key=True,
+    )
+    learning_time = Column(Integer, nullable=False, default=0.0)
+
+    # リレーションシップ
+    user = relationship("UserModel", back_populates="learning_histories")

@@ -6,8 +6,10 @@ from app.core.dependencies.repositories import (
     get_auth_repository,
     get_english_api_repository,
     get_english_repository,
+    get_mail_repository,
 )
 from app.domain.auth.auth_repository import AuthRepository
+from app.domain.email.emai_repository import EmailRepository
 from app.domain.practice.practice_api_repotiroy import PracticeApiRepository
 from app.domain.practice.practice_repository import PracticeRepository
 from app.services.auth.auth_service import AuthService
@@ -42,8 +44,9 @@ def get_practice_service(
 
 def get_auth_service(
     repository: Annotated[AuthRepository, Depends(get_auth_repository)],
+    mailRepository: Annotated[EmailRepository, Depends(get_mail_repository)],
 ) -> AuthService:
-    return AuthService(repository)
+    return AuthService(repository, mailRepository)
 
 
 @router.get("/conversations")

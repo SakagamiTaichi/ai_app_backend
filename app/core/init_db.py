@@ -3,12 +3,13 @@ import asyncio
 from app.core.database import engine, Base
 
 # モデルをインポートすることで、Base.metadataに登録される
-from app.schema.auth.user_model import UserModel
+from app.schema.auth.models import UserModel  # type: ignore
 from app.schema.practice.models import (
-    ConversationModel,
-    MessageModel,
-    ConversationTestScoreModel,
-    MessageTestScoreModel,
+    ConversationModel,  # type: ignore
+    MessageModel,  # type: ignore
+    ConversationTestScoreModel,  # type: ignore
+    MessageTestScoreModel,  # type: ignore
+    LearningHistoryModel,  # type: ignore
 )
 
 

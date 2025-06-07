@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta, timezone
+import random
+import string
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -71,3 +73,10 @@ class SecurityUtils:
             return payload
         except JWTError:
             return None
+
+    @staticmethod
+    def generate_verification_code() -> str:
+        """認証コードを生成する"""
+        return "".join(
+            random.choices(string.digits, k=settings.VERIFICATION_CODE_LENGTH)
+        )

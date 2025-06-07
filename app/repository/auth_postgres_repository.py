@@ -1,6 +1,6 @@
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-
+from sqlalchemy import and_, select
 from app.core.app_exception import ConflictError, NotFoundError, UnauthorizedError
 from app.core.security import SecurityUtils
 from app.domain.auth.auth_repository import AuthRepository
@@ -8,19 +8,120 @@ from app.domain.auth.login_information_value_object import LoginInformationValue
 from app.domain.auth.refresh_token_value_object import RefreshTokenValueObject
 from app.domain.auth.token_value_object import TokenValueObject
 from app.domain.auth.user_entity import UserEntity
-from app.schema.auth.user_model import UserModel
+from app.schema.auth.models import UserModel, VerificationCodeModel
+from app.core.config import settings
 
 
 class AuthPostgresRepository(AuthRepository):
     """PostgreSQLを使用した認証リポジトリの実装"""
 
     def __init__(self, db: AsyncSession):
-        self.db = db
+        self.db: AsyncSession = db
 
-    async def signup(self, email: str, password: str) -> UserEntity:
+    async def save_verification_code(self, email: str) -> str:
+        try:
+            # 既存の未使用コードを無効化
+            await self.db.execute(
+                VerificationCodeModel.__table__.update()
+                .where(
+                    and_(
+                        VerificationCodeModel.email == email,
+                        VerificationCodeModel.is_used == False,
+                    )
+                )
+                .values(is_used=True)
+            )
+
+            # 新しい認証コードを生成
+            code = SecurityUtils.generate_verification_code()
+            expires_at = datetime.now(timezone.utc) + timedelta(
+                minutes=settings.VERIFICATION_CODE_EXPIRE_MINUTES
+            )
+
+            # データベースに保存
+            verification = VerificationCodeModel(
+                email=email, code=code, expires_at=expires_at, is_used=False
+            )
+            self.db.add(verification)
+            await self.db.commit()
+
+            return code
+        except Exception as e:
+            await self.db.rollback()
+            raise
+
+    # async def signup_with_code(self, email: str, code: str) -> TokenValueObject:
+    #     """認証コードで新規登録する"""
+    #     try:
+    #         # 認証コードを検証
+    #         is_valid = await self.verify_code(email, code)
+    #         if not is_valid:
+    #             raise UnauthorizedError(
+    #                 detail="認証コードが無効か、有効期限が切れています。"
+    #             )
+
+    #         # ユーザーを取得
+    #         result = await self.db.execute(
+    #             select(UserModel).where(UserModel.email == email)
+    #         )
+    #         user = result.scalar_one_or_none()
+
+    #         if not user:
+    #             raise NotFoundError(detail="ユーザーが見つかりません。")
+
+    #         # トークンの生成
+    #         access_token = SecurityUtils.create_access_token({"sub": str(user.id)})
+    #         refresh_token = SecurityUtils.create_refresh_token({"sub": str(user.id)})
+
+    #         return TokenValueObject(
+    #             access_token=access_token,
+    #             refresh_token=RefreshTokenValueObject(refresh_token=refresh_token),
+    #             token_type="bearer",
+    #         )
+
+    #     except Exception as e:
+    #         raise
+
+    async def _verify_code(self, email: str, code: str) -> bool:
+        """認証コードを検証する"""
+        try:
+            result = await self.db.execute(
+                select(VerificationCodeModel).where(
+                    and_(
+                        VerificationCodeModel.email == email,
+                        VerificationCodeModel.code == code,
+                        VerificationCodeModel.is_used == False,
+                        VerificationCodeModel.expires_at > datetime.now(timezone.utc),
+                    )
+                )
+            )
+            verification = result.scalar_one_or_none()
+
+            if not verification:
+                return False
+
+            # 使用済みにマーク
+            verification.is_used = True  # type: ignore
+            await self.db.commit()
+            return True
+
+        except Exception as e:
+            await self.db.rollback()
+            raise
+
+    async def signup(self, email: str, password: str, code: str) -> TokenValueObject:
         """新規ユーザーを登録する"""
         try:
+
+            # 認証コードを検証
+            is_valid = await self._verify_code(email, code)
+            if not is_valid:
+                raise UnauthorizedError(
+                    detail="認証コードが無効か、有効期限が切れています。"
+                )
+
             # 既存ユーザーのチェック
+            # ※User Enumeration Attackにつながるため、認証コード送信時にユーザーチェックを行うのではなく、新規登録時に行う
             result = await self.db.execute(
                 select(UserModel).where(UserModel.email == email)
             )
@@ -42,10 +143,16 @@ class AuthPostgresRepository(AuthRepository):
             await self.db.commit()
             await self.db.refresh(new_user)
 
-            return UserEntity(
-                id=str(new_user.id),
-                email=str(new_user.email),
-                is_active=bool(new_user.is_active),
+            # トークンの生成
+            access_token = SecurityUtils.create_access_token({"sub": str(new_user.id)})
+            refresh_token = SecurityUtils.create_refresh_token(
+                {"sub": str(new_user.id)}
+            )
+
+            return TokenValueObject(
+                access_token=access_token,
+                refresh_token=RefreshTokenValueObject(refresh_token=refresh_token),
+                token_type="bearer",
             )
 
         except Exception as e:

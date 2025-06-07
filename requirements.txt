@@ -24,3 +24,6 @@ sqlalchemy
 asyncpg
 python-jose[cryptography]
 passlib[bcrypt]
+alembic
+psycopg2-binary
+resend

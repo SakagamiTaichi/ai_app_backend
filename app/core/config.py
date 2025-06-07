@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4.1-mini"
     TEMPERATURE: float = 0.7
     ASYNC_DATABASE_URL: str = ""
+    DATABASE_URL: str = ""
     LANGCHAIN_TRACING_V2: bool = False
     LANGCHAIN_ENDPOINT: str = ""
     LANGCHAIN_API_KEY: str = ""
@@ -18,6 +19,14 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # Resend設定
+    RESEND_API_KEY: str = ""
+    RESEND_FROM_EMAIL: str = "onboarding@resend.dev"
+
+    # 認証コード設定
+    VERIFICATION_CODE_EXPIRE_MINUTES: int = 10
+    VERIFICATION_CODE_LENGTH: int = 6
 
     class Config:
         case_sensitive = True

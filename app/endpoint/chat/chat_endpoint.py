@@ -2,10 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordBearer
-from app.core.dependencies.repositories import get_auth_repository
-from app.domain.auth.auth_repository import AuthRepository
 from app.services.chat.chat_service import ChatService
-from app.services.auth.auth_service import AuthService
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -16,12 +13,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/auth/token")
 # サービスのインスタンス作成に依存性注入を使用
 def get_chat_service() -> ChatService:
     return ChatService()
-
-
-def get_auth_service(
-    repository: Annotated[AuthRepository, Depends(get_auth_repository)],
-) -> AuthService:
-    return AuthService(repository)
 
 
 @router.get("/message")

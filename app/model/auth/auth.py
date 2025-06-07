@@ -6,6 +6,7 @@ class UserCreateRequest(BaseModel):
 
     email: EmailStr = Field(..., description="ユーザーのメールアドレス")
     password: str = Field(..., min_length=8, description="パスワード (8文字以上)")
+    code: str = Field(..., description="認証コード")
 
 
 class UserLoginRequest(BaseModel):
@@ -29,3 +30,22 @@ class UserResponse(BaseModel):
     id: str = Field(..., description="ユーザーID")
     email: EmailStr = Field(..., description="ユーザーのメールアドレス")
     is_active: bool = Field(..., description="アクティブ状態")
+
+
+class VerificationCodeResponse(BaseModel):
+    """認証コード送信レスポンス用のスキーマ"""
+
+    email: EmailStr = Field(..., description="メールアドレス")
+
+
+class VerificationCodeRequest(BaseModel):
+    """認証コード送信リクエスト用のスキーマ"""
+
+    email: EmailStr = Field(..., description="ユーザーのメールアドレス")
+
+
+class SignUpWithCodeRequest(BaseModel):
+    """認証コードでのサインインリクエスト用のスキーマ"""
+
+    email: EmailStr = Field(..., description="ユーザーのメールアドレス")
+    code: str = Field(..., description="認証コード")

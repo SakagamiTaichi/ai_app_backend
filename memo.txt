@@ -14,3 +14,18 @@ git branch -dr origin/add-reset-feature
 git branch -d: ローカルブランチを削除するコマンドです
 git remote prune origin: リモートで削除されたブランチに対応するリモート追跡ブランチを一括で削除します
 git branch -dr: 特定のリモート追跡ブランチを削除するコマンドです（-d はdelete、-r はremoteの意味）
+
+
+データベースマイグレーション
+alembic revision --autogenerate -m "コメントを書く
+
+# 最新のマイグレーションまで実行
+alembic upgrade head
+
+# 特定のリビジョンまで実行
+alembic upgrade <revision_id>
+
+# 1つ前のバージョンに戻す
+alembic downgrade -1
+
+
