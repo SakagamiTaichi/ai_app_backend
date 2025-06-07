@@ -7,7 +7,7 @@ from app.domain.auth.auth_repository import AuthRepository
 from app.domain.email.emai_repository import EmailRepository
 from app.model.auth.auth import (
     TokenResponse,
-    UserCreateRequest,
+    SignUpRequestModel,
     UserLoginRequest,
     UserResponse,
     VerificationCodeRequest,
@@ -34,7 +34,7 @@ def get_auth_service(
     "/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
 )
 async def signup(
-    user_data: UserCreateRequest,
+    user_data: SignUpRequestModel,
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> TokenResponse:
     """新規ユーザー登録"""

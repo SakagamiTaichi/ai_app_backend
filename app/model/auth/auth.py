@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 
 
-class UserCreateRequest(BaseModel):
+class SignUpRequestModel(BaseModel):
     """ユーザー登録用のスキーマ"""
 
     email: EmailStr = Field(..., description="ユーザーのメールアドレス")
@@ -42,10 +42,3 @@ class VerificationCodeRequest(BaseModel):
     """認証コード送信リクエスト用のスキーマ"""
 
     email: EmailStr = Field(..., description="ユーザーのメールアドレス")
-
-
-class SignUpWithCodeRequest(BaseModel):
-    """認証コードでのサインインリクエスト用のスキーマ"""
-
-    email: EmailStr = Field(..., description="ユーザーのメールアドレス")
-    code: str = Field(..., description="認証コード")
