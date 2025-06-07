@@ -40,7 +40,7 @@ app.add_middleware(
 app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=[
-        "ai-app-backend-zr75.onrender.com",  # 本番環境
+        "api.eigoats.com",  # カスタムドメイン
         "localhost",  # 開発環境
     ],
 )
