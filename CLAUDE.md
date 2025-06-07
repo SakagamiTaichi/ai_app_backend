@@ -1,5 +1,5 @@
 # CLAUDE.md
-
+必ず日本語で返答してください。
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Development Commands
@@ -29,6 +29,24 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 # Run production server (Render deployment)
 uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+### Testing
+```bash
+# Run all tests
+pytest
+
+# Run tests with verbose output
+pytest -v
+
+# Run specific test file
+pytest tests/repository/test_auth_postgres_repository.py
+
+# Run tests with coverage
+pytest --cov=app
+
+# Run tests and generate HTML coverage report
+pytest --cov=app --cov-report=html
 ```
 
 ## Architecture Overview

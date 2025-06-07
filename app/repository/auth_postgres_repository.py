@@ -38,9 +38,14 @@ class AuthPostgresRepository(AuthRepository):
                 minutes=settings.VERIFICATION_CODE_EXPIRE_MINUTES
             )
 
-            # データベースに保存
+            # データベースに保存（認証試行回数とロック状態をリセット）
             verification = VerificationCodeModel(
-                email=email, code=code, expires_at=expires_at, is_used=False
+                email=email, 
+                code=code, 
+                expires_at=expires_at, 
+                is_used=False,
+                verification_attempts=0,
+                is_locked=False
             )
             self.db.add(verification)
             await self.db.commit()
@@ -50,57 +55,50 @@ class AuthPostgresRepository(AuthRepository):
             await self.db.rollback()
             raise
 
-    # async def signup_with_code(self, email: str, code: str) -> TokenValueObject:
-    #     """認証コードで新規登録する"""
-    #     try:
-    #         # 認証コードを検証
-    #         is_valid = await self.verify_code(email, code)
-    #         if not is_valid:
-    #             raise UnauthorizedError(
-    #                 detail="認証コードが無効か、有効期限が切れています。"
-    #             )
-
-    #         # ユーザーを取得
-    #         result = await self.db.execute(
-    #             select(UserModel).where(UserModel.email == email)
-    #         )
-    #         user = result.scalar_one_or_none()
-
-    #         if not user:
-    #             raise NotFoundError(detail="ユーザーが見つかりません。")
-
-    #         # トークンの生成
-    #         access_token = SecurityUtils.create_access_token({"sub": str(user.id)})
-    #         refresh_token = SecurityUtils.create_refresh_token({"sub": str(user.id)})
-
-    #         return TokenValueObject(
-    #             access_token=access_token,
-    #             refresh_token=RefreshTokenValueObject(refresh_token=refresh_token),
-    #             token_type="bearer",
-    #         )
-
-    #     except Exception as e:
-    #         raise
-
     async def _verify_code(self, email: str, code: str) -> bool:
-        """認証コードを検証する"""
+        """認証コードを検証する（試行回数制限付き）"""
         try:
+            # 最新の認証コードを取得（有効期限内でis_used=False）
             result = await self.db.execute(
                 select(VerificationCodeModel).where(
                     and_(
                         VerificationCodeModel.email == email,
-                        VerificationCodeModel.code == code,
                         VerificationCodeModel.is_used == False,
                         VerificationCodeModel.expires_at > datetime.now(timezone.utc),
                     )
-                )
+                ).order_by(VerificationCodeModel.created_at.desc())
             )
             verification = result.scalar_one_or_none()
 
             if not verification:
                 return False
 
-            # 使用済みにマーク
+            # ロックされている場合は認証を拒否
+            if verification.is_locked:  # type: ignore
+                raise UnauthorizedError(
+                    detail="認証試行回数が上限に達したため、この認証コードはロックされています。新しい認証コードを取得してください。"
+                )
+
+            # コードが一致するかチェック
+            if verification.code != code:  # type: ignore
+                # 試行回数を増加
+                verification.verification_attempts += 1  # type: ignore
+                
+                # 3回以上試行した場合はロック
+                if verification.verification_attempts >= 3:  # type: ignore
+                    verification.is_locked = True  # type: ignore
+                    await self.db.commit()
+                    raise UnauthorizedError(
+                        detail="認証コードの入力に3回失敗したため、この認証コードはロックされました。新しい認証コードを取得してください。"
+                    )
+                
+                await self.db.commit()
+                remaining_attempts = 3 - verification.verification_attempts  # type: ignore
+                raise UnauthorizedError(
+                    detail=f"認証コードが正しくありません。残り試行回数: {remaining_attempts}回"
+                )
+
+            # 認証成功 - 使用済みにマーク
             verification.is_used = True  # type: ignore
             await self.db.commit()
             return True

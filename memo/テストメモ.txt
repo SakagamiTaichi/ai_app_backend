@@ -1,0 +1,40 @@
+● テストフレームワークの設定が完了しました。以下を実装しました：
+
+  実装したテスト環境
+
+  1. テストライブラリ
+
+  - pytest: Pythonの標準的なテストフレームワーク
+  - pytest-asyncio: 非同期テストのサポート
+  - pytest-mock: モック機能
+  - pytest-cov: カバレッジ測定
+  - aiosqlite: テスト用のSQLiteデータベース
+
+  2. テスト構成
+
+  tests/
+  ├── __init__.py
+  ├── conftest.py                    # テスト設定とフィクスチャ
+  └── repository/
+      ├── __init__.py
+      └── test_auth_postgres_repository.py  # AuthPostgresRepositoryのテスト
+
+  3. テストの特徴
+
+  - インメモリSQLite: PostgreSQLの代わりにテスト専用のSQLiteを使用
+  - 非同期テスト: async/awaitに完全対応
+  - モック: SecurityUtilsのトークン生成をモック化
+  - 包括的テスト: 全てのパブリックメソッドをカバー
+  - エラーケース: 例外処理も含めて検証
+
+  4. テスト対象メソッド
+
+  - save_verification_code(): 認証コードの生成・保存
+  - _verify_code(): 認証コードの検証
+  - signup(): ユーザー新規登録
+  - signin(): ユーザーサインイン
+  - refresh_token(): トークンのリフレッシュ
+  - get_user(): ユーザー情報取得
+  - get_current_user(): 現在のユーザー取得
+
+  テストの実行は pytest コマンドで行えます。

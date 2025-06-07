@@ -92,17 +92,3 @@ class AuthService:
         except Exception as e:
             # エラーハンドリング
             raise
-
-    # async def signup_with_code(self, email: str, code: str) -> TokenResponse:
-    #     """認証コードでサインイン"""
-    #     try:
-    #         valueObject = await self.dbRepository.signup_with_code(email, code)
-    #         return TokenResponse(
-    #             access_token=valueObject.access_token,
-    #             refresh_token=valueObject.refresh_token.refresh_token,
-    #             token_type=valueObject.token_type,
-    #         )
-    #     except ValidationError as e:
-    #         raise BadRequestError(detail=e.title)
-    #     except Exception as e:
-    #         raise

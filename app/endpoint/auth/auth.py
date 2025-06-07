@@ -31,16 +31,19 @@ def get_auth_service(
 
 
 @router.post(
-    "/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+    "/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
 )
 async def signup(
     user_data: UserCreateRequest,
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> TokenResponse:
     """新規ユーザー登録"""
-    return await auth_service.signup(
-        user_data.email, user_data.password, user_data.code
-    )
+    try:
+        return await auth_service.signup(
+            user_data.email, user_data.password, user_data.code
+        )
+    except Exception as e:
+        raise e
 
 
 @router.post("/token", response_model=TokenResponse)

@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     # Resend設定
     RESEND_API_KEY: str = ""
-    RESEND_FROM_EMAIL: str = "onboarding@resend.dev"
+    RESEND_FROM_EMAIL: str = "noreply@eigoats.com"
 
     # 認証コード設定
     VERIFICATION_CODE_EXPIRE_MINUTES: int = 10

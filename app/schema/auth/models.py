@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Boolean, DateTime
+from sqlalchemy import Column, String, Boolean, DateTime, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from app.core.database import Base
 from sqlalchemy.orm import relationship
@@ -34,6 +34,8 @@ class VerificationCodeModel(Base):
     email = Column(String, nullable=False, index=True)
     code = Column(String(6), nullable=False)
     is_used = Column(Boolean, default=False)
+    verification_attempts = Column(Integer, default=0)
+    is_locked = Column(Boolean, default=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     created_at = Column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)

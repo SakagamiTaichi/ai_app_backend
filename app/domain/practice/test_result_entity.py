@@ -24,16 +24,6 @@ class MessageScore(BaseModel):
     user_answer: str
     correct_answer: str
 
-    # @model_validator(mode="after")
-    # def validate_score(self):
-    #     if self.is_correct and self.score < TestConstants.CORRECT_THRESHOLD:
-    #         raise BadRequestError(
-    #             detail="正解のスコアが {} 未満です".format(
-    #                 TestConstants.CORRECT_THRESHOLD
-    #             )
-    #         )
-    #     return self
-
     @staticmethod
     def tokenize(text: str) -> List[str]:
         # 前処理を追加
