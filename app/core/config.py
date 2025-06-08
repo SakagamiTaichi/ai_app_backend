@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     VERIFICATION_CODE_EXPIRE_MINUTES: int = 10
     VERIFICATION_CODE_LENGTH: int = 6
 
+    # フロントエンド設定
+    FRONTEND_URL: str = "com.example.ai_english"
+
     class Config:
         case_sensitive = True
         env_file = ".env"

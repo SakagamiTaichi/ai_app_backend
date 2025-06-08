@@ -3,7 +3,7 @@ from app.core.app_exception import BadRequestError
 from app.domain.auth.auth_repository import AuthRepository
 from app.domain.auth.login_information_value_object import LoginInformationValueObject
 from app.domain.email.emai_repository import EmailRepository
-from app.model.auth.auth import TokenResponse, UserResponse, VerificationCodeResponse
+from app.model.auth.auth import TokenResponse, UserResponse, VerificationCodeResponse, PasswordResetResponse
 
 
 class AuthService:
@@ -91,4 +91,37 @@ class AuthService:
             raise BadRequestError(detail=e.title)
         except Exception as e:
             # エラーハンドリング
+            raise
+
+    async def request_password_reset(self, email: str) -> PasswordResetResponse:
+        """パスワードリセット要求"""
+        try:
+            token = await self.dbRepository.create_password_reset_token(email)
+            
+            # メールアドレスが存在しない場合でもセキュリティ上成功レスポンスを返す
+            if token:
+                await self.mailRepository.send_password_reset_email(email, token)
+            
+            return PasswordResetResponse(
+                message="パスワードリセット用のメールを送信しました。メールをご確認ください。"
+            )
+        except ValidationError as e:
+            raise BadRequestError(detail=e.title)
+        except Exception as e:
+            raise
+
+    async def reset_password(self, token: str, new_password: str) -> PasswordResetResponse:
+        """パスワードリセット実行"""
+        try:
+            success = await self.dbRepository.reset_password(token, new_password)
+            
+            if success:
+                return PasswordResetResponse(
+                    message="パスワードが正常にリセットされました。"
+                )
+            else:
+                raise BadRequestError(detail="パスワードのリセットに失敗しました。")
+        except ValidationError as e:
+            raise BadRequestError(detail=e.title)
+        except Exception as e:
             raise

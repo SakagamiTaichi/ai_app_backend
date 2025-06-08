@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from app.domain.auth.login_information_value_object import LoginInformationValueObject
 from app.domain.auth.token_value_object import TokenValueObject
 from app.domain.auth.user_entity import UserEntity
+from app.domain.auth.password_reset_token_entity import PasswordResetTokenEntity
 
 
 class AuthRepository(ABC):
@@ -41,4 +42,19 @@ class AuthRepository(ABC):
     @abstractmethod
     async def save_verification_code(self, email: str) -> str:
         """認証コードを生成して保存する"""
+        pass
+
+    @abstractmethod
+    async def create_password_reset_token(self, email: str) -> str:
+        """パスワードリセットトークンを生成して保存する"""
+        pass
+
+    @abstractmethod
+    async def get_password_reset_token(self, token: str) -> PasswordResetTokenEntity:
+        """パスワードリセットトークンを取得する"""
+        pass
+
+    @abstractmethod
+    async def reset_password(self, token: str, new_password: str) -> bool:
+        """パスワードをリセットする"""
         pass

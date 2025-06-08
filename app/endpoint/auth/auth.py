@@ -12,6 +12,9 @@ from app.model.auth.auth import (
     UserResponse,
     VerificationCodeRequest,
     VerificationCodeResponse,
+    PasswordResetRequestModel,
+    PasswordResetModel,
+    PasswordResetResponse,
 )
 from app.services.auth.auth_service import AuthService
 
@@ -90,6 +93,24 @@ async def send_verification_code(
     """認証コードを送信する"""
     result = await auth_service.send_verification_code(request.email)
     return result
+
+
+@router.post("/password-reset-request", response_model=PasswordResetResponse)
+async def request_password_reset(
+    request: PasswordResetRequestModel,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+) -> PasswordResetResponse:
+    """パスワードリセット要求"""
+    return await auth_service.request_password_reset(request.email)
+
+
+@router.post("/password-reset", response_model=PasswordResetResponse)
+async def reset_password(
+    request: PasswordResetModel,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+) -> PasswordResetResponse:
+    """パスワードリセット実行"""
+    return await auth_service.reset_password(request.token, request.new_password)
 
 
 # @router.post("/signin-with-code", response_model=TokenResponse)

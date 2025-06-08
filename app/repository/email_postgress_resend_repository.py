@@ -46,3 +46,49 @@ class EmailResendRepository(EmailRepository):
 
         except Exception as e:
             raise
+
+    async def send_password_reset_email(self, email: str, token: str) -> bool:
+        """パスワードリセット用のメールを送信する"""
+        try:
+            # パスワードリセット用のメール内容
+            html_content = f"""
+            <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                        <h2 style="color: #2c3e50;">パスワードリセットのお知らせ</h2>
+                        <p>こんにちは。</p>
+                        <p>パスワードリセットのリクエストを受け付けました。</p>
+                        <p>以下のリンクをクリックして、パスワードをリセットしてください：</p>
+                        <div style="background-color: #f4f4f4; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: center;">
+                            <a href="{settings.FRONTEND_URL}/password-reset?token={token}" 
+                               style="background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                                パスワードをリセット
+                            </a>
+                        </div>
+                        <p>または、以下のトークンを使用してパスワードをリセットしてください：</p>
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; word-break: break-all;">
+                            <code style="font-family: monospace; font-size: 14px;">{token}</code>
+                        </div>
+                        <p>このリンクは{settings.VERIFICATION_CODE_EXPIRE_MINUTES}分間有効です。</p>
+                        <p>パスワードリセットを要求していない場合は、このメールを無視してください。</p>
+                        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                        <p style="font-size: 12px; color: #999;">
+                            このメールは自動送信されています。返信は受け付けておりません。
+                        </p>
+                    </div>
+                </body>
+            </html>
+            """
+
+            params = {
+                "from": settings.RESEND_FROM_EMAIL,
+                "to": [email],
+                "subject": "【EIGOAT】パスワードリセット",
+                "html": html_content,
+            }
+
+            result = resend.Emails.send(params)  # type: ignore
+            return result.get("id") is not None
+
+        except Exception as e:
+            raise

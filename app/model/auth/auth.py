@@ -42,3 +42,22 @@ class VerificationCodeRequest(BaseModel):
     """認証コード送信リクエスト用のスキーマ"""
 
     email: EmailStr = Field(..., description="ユーザーのメールアドレス")
+
+
+class PasswordResetRequestModel(BaseModel):
+    """パスワードリセット要求用のスキーマ"""
+
+    email: EmailStr = Field(..., description="ユーザーのメールアドレス")
+
+
+class PasswordResetModel(BaseModel):
+    """パスワードリセット実行用のスキーマ"""
+
+    token: str = Field(..., description="パスワードリセットトークン")
+    new_password: str = Field(..., min_length=8, description="新しいパスワード (8文字以上)")
+
+
+class PasswordResetResponse(BaseModel):
+    """パスワードリセット成功レスポンス用のスキーマ"""
+
+    message: str = Field(..., description="成功メッセージ")
