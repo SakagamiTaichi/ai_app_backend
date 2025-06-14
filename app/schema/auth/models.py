@@ -25,6 +25,7 @@ class UserModel(Base):
     # リレーションシップ
     conversations = relationship("ConversationModel", back_populates="user")
     learning_histories = relationship("LearningHistoryModel", back_populates="user")
+    recall_cards = relationship("RecallCardModel", back_populates="user")
 
 
 class VerificationCodeModel(Base):

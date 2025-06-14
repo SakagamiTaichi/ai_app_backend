@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 from app.core.dependencies.repositories import (
     get_auth_repository,
     get_english_api_repository,
+    get_english_recall_repository,
     get_english_repository,
     get_mail_repository,
 )
@@ -12,8 +13,9 @@ from app.domain.auth.auth_repository import AuthRepository
 from app.domain.email.emai_repository import EmailRepository
 from app.domain.practice.practice_api_repotiroy import PracticeApiRepository
 from app.domain.practice.practice_repository import PracticeRepository
+from app.domain.recall.recall_card_repository import RecallCardrepository
 from app.services.auth.auth_service import AuthService
-from app.model.practice.practice import (
+from app.endpoint.practice.practice_model import (
     ConversationCreatedResponse,
     ConversationResponse,
     ConversationsOrderRequest,
@@ -34,12 +36,17 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/auth/token")
 
 # サービスのインスタンス作成に依存性注入を使用
 def get_practice_service(
-    dbRepository: Annotated[PracticeRepository, Depends(get_english_repository)],
+    dbPracticeRepository: Annotated[
+        PracticeRepository, Depends(get_english_repository)
+    ],
+    dbRecallCardRepository: Annotated[
+        RecallCardrepository, Depends(get_english_recall_repository)
+    ],
     apiRepository: Annotated[
         PracticeApiRepository, Depends(get_english_api_repository)
     ],
 ) -> PracticeService:
-    return PracticeService(dbRepository, apiRepository)
+    return PracticeService(dbPracticeRepository, dbRecallCardRepository, apiRepository)
 
 
 def get_auth_service(

@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.domain.auth.auth_repository import AuthRepository
 from app.domain.email.emai_repository import EmailRepository
 from app.domain.practice.practice_api_repotiroy import PracticeApiRepository
+from app.domain.recall.recall_card_repository import RecallCardrepository
 from app.repository.auth_postgres_repository import AuthPostgresRepository
 from app.domain.practice.practice_repository import PracticeRepository
 from app.repository.email_postgress_resend_repository import (
@@ -21,6 +22,7 @@ from langchain_core.language_models.chat_models import (
     BaseChatModel,
 )
 from app.core.config import settings
+from app.repository.recall_card_postgres_repository import RecallCardPostgresRepository
 
 
 def get_chat_prompt_template() -> BaseChatModel:
@@ -34,6 +36,14 @@ def get_english_repository(
     """PracticeRepositoryのインスタンスを提供する依存性"""
     # PostgreSQLリポジトリに変更
     return PracticePostgresRepository(db)
+
+
+def get_english_recall_repository(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> RecallCardrepository:
+    """PracticeRepositoryのインスタンスを提供する依存性"""
+    # PostgreSQLリポジトリに変更
+    return RecallCardPostgresRepository(db)
 
 
 def get_english_api_repository(

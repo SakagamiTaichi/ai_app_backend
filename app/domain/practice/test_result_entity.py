@@ -15,7 +15,7 @@ class TestConstants:
     PASSING_THRESHOLD: int = 80  # テスト全体の合格閾値
 
 
-class MessageScore(BaseModel):
+class MessageScoreValueObject(BaseModel):
     """メッセージごとのテストスコアを表すバリューオブジェクト"""
 
     message_order: int = Field(ge=1, description="メッセージの順番（1以上）")
@@ -37,7 +37,7 @@ class MessageScore(BaseModel):
     @staticmethod
     def calculate_similarity(user_answer: str, correct_answer: str) -> float:
         """ユーザーの回答と正解の類似度を計算する"""
-        matcher = MessageScore.get_matcher(user_answer, correct_answer)
+        matcher = MessageScoreValueObject.get_matcher(user_answer, correct_answer)
         return round(matcher.ratio() * 100)
 
     @staticmethod
@@ -63,7 +63,7 @@ class MessageScore(BaseModel):
     @classmethod
     def factory(
         cls, message_order: int, user_answer: str, correct_answer: str
-    ) -> "MessageScore":
+    ) -> "MessageScoreValueObject":
         """メッセージスコアを計算して作成する"""
         score = cls.calculate_similarity(user_answer, correct_answer)
         return cls(
@@ -80,12 +80,12 @@ class TestResultEntity(BaseModel):
 
     conversation_id: UUID
     test_number: int
-    message_scores: List[MessageScore] = Field(default_factory=list)
+    message_scores: List[MessageScoreValueObject] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.now)
 
     @field_validator("message_scores", mode="before")
     @classmethod
-    def validate_message_scores(cls, value: List[MessageScore]):
+    def validate_message_scores(cls, value: List[MessageScoreValueObject]):
         if not value:
             raise BadRequestError(detail="メッセージスコアは1つ以上必要です")
         return value
@@ -115,7 +115,7 @@ class TestResultEntity(BaseModel):
         result = cls(conversation_id=conversation_id, test_number=test_number)
 
         for answer in answers:
-            score = MessageScore.factory(
+            score = MessageScoreValueObject.factory(
                 message_order=int(answer["message_order"]),
                 user_answer=answer["user_answer"],
                 correct_answer=answer["correct_answer"],

@@ -10,14 +10,15 @@ from alembic import context
 # モデルをインポート
 from app.core.database import Base
 from app.core.config import settings
-from app.schema.auth.models import UserModel
+from app.schema.auth.models import UserModel  # type: ignore
 from app.schema.practice.models import (
-    ConversationModel,
-    MessageModel,
-    ConversationTestScoreModel,
-    MessageTestScoreModel,
-    LearningHistoryModel,
+    ConversationModel,  # type: ignore
+    MessageModel,  # type: ignore
+    ConversationTestScoreModel,  # type: ignore
+    MessageTestScoreModel,  # type: ignore
+    LearningHistoryModel,  # type: ignore
 )
+from app.schema.recall.models import RecallCardModel  # type: ignore
 
 
 # このパスを追加して、アプリケーションのモジュールをインポートできるようにする

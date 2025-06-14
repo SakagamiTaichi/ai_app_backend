@@ -10,8 +10,13 @@ from app.core.app_exception import BadRequestError, ConflictError, NotFoundError
 from app.domain.practice.conversation_entity import ConversationEntity, MessageEntity
 from app.domain.practice.practice_api_repotiroy import PracticeApiRepository
 from app.domain.practice.practice_repository import PracticeRepository
-from app.domain.practice.test_result_entity import MessageScore, TestResultEntity
-from app.model.practice.practice import (
+from app.domain.practice.test_result_entity import (
+    MessageScoreValueObject,
+    TestResultEntity,
+)
+from app.domain.recall.reacall_card_entity import RecallCardEntity
+from app.domain.recall.recall_card_repository import RecallCardrepository
+from app.endpoint.practice.practice_model import (
     Conversation,
     ConversationCreatedResponse,
     ConversationResponse,
@@ -26,10 +31,14 @@ from app.model.practice.practice import (
 
 class PracticeService:
     def __init__(
-        self, repository: PracticeRepository, apiRepository: PracticeApiRepository
+        self,
+        practiceRepository: PracticeRepository,
+        recallCardRepository: RecallCardrepository,
+        apiRepository: PracticeApiRepository,
     ):
         # 何もしない
-        self.dbRepository = repository
+        self.dbRepository = practiceRepository
+        self.dbRecallCardRepository = recallCardRepository
         self.apiRepository = apiRepository
 
     async def ai_registration(
@@ -38,7 +47,7 @@ class PracticeService:
         """AIによって会話を登録する"""
         try:
             # ユーザーの会話セットを取得
-            conversation_set = await self.dbRepository.get_conversations(user_id)
+            conversation_set = await self.dbRepository.fetchAll(user_id)
 
             # 全ての会話セットの中から最大の順番を設定する
             order = conversation_set[0].order + 1 if conversation_set else 0
@@ -71,7 +80,22 @@ class PracticeService:
             )
 
             # データベースに保存
-            await self.dbRepository.create_conversation_set(conversation_set)
+            await self.dbRepository.create(conversation_set)
+
+            # 暗記カードに保存
+            recall_cards = [
+                RecallCardEntity(
+                    recall_card_id=uuid4(),
+                    user_id=UUID(user_id),
+                    question=message.message_ja,
+                    answer=message.message_en,
+                    correct_point=0,
+                    review_deadline=datetime.now(),
+                )
+                for message in valueObject.messages
+            ]
+            await self.dbRecallCardRepository.createAll(recall_cards)
+
             # Pydanticモデルを返す
             return ConversationCreatedResponse(id=conversation_id)
         except ValidationError as e:
@@ -85,8 +109,8 @@ class PracticeService:
         """ユーザーの会話一覧を取得する"""
         try:
             # ユーザーの会話一覧を取得
-            entities: List[ConversationEntity] = (
-                await self.dbRepository.get_conversations(user_id)
+            entities: List[ConversationEntity] = await self.dbRepository.fetchAll(
+                user_id
             )
             conversations = [
                 Conversation(
@@ -112,7 +136,7 @@ class PracticeService:
     ) -> None:
         try:
             # ユーザーの会話一覧を取得
-            conversations = await self.dbRepository.get_conversations(user_id)
+            conversations = await self.dbRepository.fetchAll(user_id)
 
             # 指定された会話セットがユーザーの会話セットに存在するか確認
             for conversation_id in conversation_ids:
@@ -136,7 +160,7 @@ class PracticeService:
     ) -> ConversationResponse:
         """会話セットのメッセージ一覧を取得する"""
         try:
-            entities: List[MessageResponse] = await self.dbRepository.get_conversation(
+            entities: List[MessageResponse] = await self.dbRepository.fetch(
                 conversation_id, user_id
             )
             messages = [
@@ -204,7 +228,9 @@ class PracticeService:
 
     def _generate_diff_html(self, user_tokens: List[str], correct_tokens: List[str]):
         """差分に基づいてHTMLマークアップを生成する"""
-        diff_blocks = MessageScore.get_diff_blocks(user_tokens, correct_tokens)
+        diff_blocks = MessageScoreValueObject.get_diff_blocks(
+            user_tokens, correct_tokens
+        )
         user_html = []
         correct_html = []
         for tag, i1, i2, j1, j2 in diff_blocks:
@@ -240,7 +266,7 @@ class PracticeService:
         """テスト結果を処理し、データベースに保存する"""
         try:
             # リクエストの会話IDから会話セットを取得
-            conversation = await self.dbRepository.get_conversation(
+            conversation = await self.dbRepository.fetch(
                 request.conversation_id, user_id
             )
 

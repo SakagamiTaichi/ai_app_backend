@@ -5,16 +5,28 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from app.core.dependencies.repositories import get_auth_repository, get_mail_repository
 from app.domain.auth.auth_repository import AuthRepository
 from app.domain.email.emai_repository import EmailRepository
-from app.model.auth.auth import (
-    TokenResponse,
+
+# from app.model.auth.auth_model import (
+#     TokenResponse,
+#     SignUpRequestModel,
+#     UserLoginRequest,
+#     UserResponse,
+#     VerificationCodeRequest,
+#     VerificationCodeResponse,
+#     PasswordResetRequestModel,
+#     PasswordResetModel,
+#     PasswordResetResponse,
+# )
+from app.endpoint.auth.auth_model import (
+    PasswordResetModel,
+    PasswordResetRequestModel,
+    PasswordResetResponse,
     SignUpRequestModel,
+    TokenResponse,
     UserLoginRequest,
     UserResponse,
     VerificationCodeRequest,
     VerificationCodeResponse,
-    PasswordResetRequestModel,
-    PasswordResetModel,
-    PasswordResetResponse,
 )
 from app.services.auth.auth_service import AuthService
 
@@ -111,12 +123,3 @@ async def reset_password(
 ) -> PasswordResetResponse:
     """パスワードリセット実行"""
     return await auth_service.reset_password(request.token, request.new_password)
-
-
-# @router.post("/signin-with-code", response_model=TokenResponse)
-# async def signup_with_code(
-#     request: SignUpWithCodeRequest,
-#     auth_service: Annotated[AuthService, Depends(get_auth_service)],
-# ) -> TokenResponse:
-#     """認証コードでサインイン"""
-#     return await auth_service.signup_with_code(request.email, request.code)

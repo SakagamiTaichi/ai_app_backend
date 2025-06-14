@@ -3,12 +3,14 @@ from app.core.app_exception import setup_exception_handlers
 from app.endpoint.health_check import health_check
 
 # from app.endpoint.search_event import search_event_endpoint
-from app.endpoint.auth import auth
+from app.endpoint.auth import auth_endpoint
 from app.endpoint.practice import practice_endpoint
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from app.core.config import settings
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
+from app.endpoint.recall import recall_endpoint
 
 
 if settings.ENVIRONMENT == "production":
@@ -49,5 +51,6 @@ setup_exception_handlers(app)
 
 app.include_router(health_check.router)
 app.include_router(practice_endpoint.router)
-app.include_router(auth.router)  # 認証エンドポイントを追加
+app.include_router(auth_endpoint.router)  # 認証エンドポイントを追加
+app.include_router(recall_endpoint.router)  # 暗記カードエンドポイントを追加
 # app.include_router(search_event_endpoint.router, tags=["auth"])

@@ -4,14 +4,14 @@ from uuid import UUID
 
 from app.domain.practice.conversation_entity import ConversationEntity
 from app.domain.practice.test_result_entity import TestResultEntity
-from app.model.practice.practice import MessageResponse
+from app.endpoint.practice.practice_model import MessageResponse
 
 
 class PracticeRepository(ABC):
     """英語学習関連データのリポジトリインターフェース"""
 
     @abstractmethod
-    async def get_conversations(self, user_id: str) -> List[ConversationEntity]:
+    async def fetchAll(self, user_id: str) -> List[ConversationEntity]:
         """特定ユーザーの会話セットの一覧を取得する"""
         pass
 
@@ -23,9 +23,7 @@ class PracticeRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_conversation(
-        self, conversation_id: UUID, user_id: str
-    ) -> List[MessageResponse]:
+    async def fetch(self, conversation_id: UUID, user_id: str) -> List[MessageResponse]:
         """特定の会話セットに属するメッセージを取得する（アクセス権の確認あり）"""
         pass
 
@@ -35,9 +33,7 @@ class PracticeRepository(ABC):
         pass
 
     @abstractmethod
-    async def create_conversation_set(
-        self, conversation_set: ConversationEntity
-    ) -> None:
+    async def create(self, conversation_set: ConversationEntity) -> None:
         """会話セットを作成する"""
         pass
 

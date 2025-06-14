@@ -11,6 +11,7 @@ from app.schema.practice.models import (
     MessageTestScoreModel,  # type: ignore
     LearningHistoryModel,  # type: ignore
 )
+from app.schema.recall.models import RecallCardModel  # type: ignore
 
 
 async def init_db():

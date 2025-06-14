@@ -6,9 +6,12 @@ from sqlalchemy import select, update, desc
 from sqlalchemy.orm import selectinload
 
 from app.domain.practice.conversation_entity import ConversationEntity
-from app.domain.practice.test_result_entity import MessageScore, TestResultEntity
+from app.domain.practice.test_result_entity import (
+    MessageScoreValueObject,
+    TestResultEntity,
+)
 from app.domain.practice.practice_repository import PracticeRepository
-from app.model.practice.practice import MessageResponse
+from app.endpoint.practice.practice_model import MessageResponse
 from app.schema.practice.models import (
     ConversationModel,
     MessageModel,
@@ -23,7 +26,7 @@ class PracticePostgresRepository(PracticeRepository):
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_conversations(self, user_id: str) -> List[ConversationEntity]:
+    async def fetchAll(self, user_id: str) -> List[ConversationEntity]:
         """特定ユーザーの会話セットの一覧を取得する"""
         try:
             result = await self.db.execute(
@@ -69,9 +72,7 @@ class PracticePostgresRepository(PracticeRepository):
             await self.db.rollback()
             raise
 
-    async def get_conversation(
-        self, conversation_id: UUID, user_id: str
-    ) -> List[MessageResponse]:
+    async def fetch(self, conversation_id: UUID, user_id: str) -> List[MessageResponse]:
         """特定の会話セットに属するメッセージを取得する（アクセス権の確認あり）"""
         try:
             # まず会話セットの所有者を確認
@@ -131,9 +132,7 @@ class PracticePostgresRepository(PracticeRepository):
             await self.db.rollback()
             raise
 
-    async def create_conversation_set(
-        self, conversation_set: ConversationEntity
-    ) -> None:
+    async def create(self, conversation_set: ConversationEntity) -> None:
         """会話セットを作成する"""
         try:
             # 同時にメッセージも保存する
@@ -227,7 +226,7 @@ class PracticePostgresRepository(PracticeRepository):
                 msg = msg_result.scalar_one_or_none()
 
                 if msg:
-                    score = MessageScore(
+                    score = MessageScoreValueObject(
                         message_order=item.message_order,
                         score=item.score,
                         is_correct=item.score >= 90.0,
