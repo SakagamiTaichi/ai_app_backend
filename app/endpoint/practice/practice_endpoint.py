@@ -61,13 +61,15 @@ async def get_conversations(
     token: Annotated[str, Depends(oauth2_scheme)],
     chat_service: Annotated[PracticeService, Depends(get_practice_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    limit: int = 10,
+    offset: int = 0,
 ) -> ConversationsResponse:
     """ログインユーザーの会話セットの一覧を取得する"""
     try:
         # 現在のユーザー情報を取得
         current_user = await auth_service.get_current_user(token)
         # ユーザーIDに基づいて会話セットをフィルタリング
-        return await chat_service.get_conversations(current_user.id)
+        return await chat_service.get_conversations(current_user.id, limit, offset)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

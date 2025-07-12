@@ -105,13 +105,16 @@ class PracticeService:
             # エラーハンドリング
             raise
 
-    async def get_conversations(self, user_id: str) -> ConversationsResponse:
+    async def get_conversations(self, user_id: str, limit: int = 10, offset: int = 0) -> ConversationsResponse:
         """ユーザーの会話一覧を取得する"""
         try:
             # ユーザーの会話一覧を取得
             entities: List[ConversationEntity] = await self.dbRepository.fetchAll(
-                user_id
+                user_id, limit, offset
             )
+            # 総数を取得
+            total_count = await self.dbRepository.count_conversations(user_id)
+            
             conversations = [
                 Conversation(
                     id=entity.id,
@@ -123,7 +126,12 @@ class PracticeService:
                 for entity in entities
             ]
             # ConversationResponseを作成して返す
-            return ConversationsResponse(conversations=conversations)
+            return ConversationsResponse(
+                conversations=conversations,
+                total_count=total_count,
+                limit=limit,
+                offset=offset
+            )
         except ValidationError as e:
             # バリデーションエラーの処理
             raise BadRequestError(detail=e.title)

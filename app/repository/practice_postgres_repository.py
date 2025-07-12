@@ -26,7 +26,7 @@ class PracticePostgresRepository(PracticeRepository):
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def fetchAll(self, user_id: str) -> List[ConversationEntity]:
+    async def fetchAll(self, user_id: str, limit: int = 10, offset: int = 0) -> List[ConversationEntity]:
         """特定ユーザーの会話セットの一覧を取得する"""
         try:
             result = await self.db.execute(
@@ -34,6 +34,8 @@ class PracticePostgresRepository(PracticeRepository):
                 .options(selectinload(ConversationModel.messages))
                 .where(ConversationModel.user_id == user_id)
                 .order_by(desc(ConversationModel.created_at))
+                .limit(limit)
+                .offset(offset)
             )
 
             conversations = result.scalars().all()
@@ -50,6 +52,18 @@ class PracticePostgresRepository(PracticeRepository):
                 for conversation in conversations
             ]
 
+        except Exception as e:
+            raise
+
+    async def count_conversations(self, user_id: str) -> int:
+        """特定ユーザーの会話セット総数を取得する"""
+        try:
+            from sqlalchemy import func
+            result = await self.db.execute(
+                select(func.count(ConversationModel.id))
+                .where(ConversationModel.user_id == user_id)
+            )
+            return result.scalar() or 0
         except Exception as e:
             raise
 

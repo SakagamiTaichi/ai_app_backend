@@ -11,8 +11,13 @@ class PracticeRepository(ABC):
     """英語学習関連データのリポジトリインターフェース"""
 
     @abstractmethod
-    async def fetchAll(self, user_id: str) -> List[ConversationEntity]:
+    async def fetchAll(self, user_id: str, limit: int = 10, offset: int = 0) -> List[ConversationEntity]:
         """特定ユーザーの会話セットの一覧を取得する"""
+        pass
+    
+    @abstractmethod
+    async def count_conversations(self, user_id: str) -> int:
+        """特定ユーザーの会話セット総数を取得する"""
         pass
 
     @abstractmethod

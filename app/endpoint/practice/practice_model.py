@@ -22,6 +22,9 @@ class Conversation(BaseModel):
 
 class ConversationsResponse(BaseModel):
     conversations: List[Conversation] = Field(..., description="conversation")
+    total_count: int = Field(..., description="total count of conversations")
+    limit: int = Field(..., description="limit")
+    offset: int = Field(..., description="offset")
 
 
 class ConversationsOrderRequest(BaseModel):

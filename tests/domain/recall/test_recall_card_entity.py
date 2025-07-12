@@ -58,7 +58,7 @@ class TestRecallCardEntity:
             updated_card.correct_point
             == 9 - RecallCardConstants.CORRECT_POINT_DECREMENT
         )
-        assert updated_card.review_deadline=datetime.datetime(2023, 10, 1, 12, 0, 0)
+        assert updated_card.review_deadline == datetime.datetime(2023, 10, 1, 12, 0, 0)
 
     def test_update_with_negative_correct_point(self):
         """不正解時に正解ポイントが負数にならないことをテスト"""
