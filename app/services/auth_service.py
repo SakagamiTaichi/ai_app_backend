@@ -38,9 +38,9 @@ class AuthService:
             entity = await self.dbRepository.signup(email, password, code)
 
             return TokenResponse(
-                access_token=entity.access_token,
-                refresh_token=entity.refresh_token.refresh_token,
-                token_type=entity.token_type,
+                access_token=entity.accessToken,
+                refresh_token=entity.refreshToken.refreshToken,
+                token_type=entity.tokenType,
             )
         except ValidationError as e:
             # バリデーションエラーの処理
@@ -57,9 +57,9 @@ class AuthService:
 
             valueObject = await self.dbRepository.signin(loginInfo)
             return TokenResponse(
-                access_token=valueObject.access_token,
-                refresh_token=valueObject.refresh_token.refresh_token,
-                token_type=valueObject.token_type,
+                access_token=valueObject.accessToken,
+                refresh_token=valueObject.refreshToken.refreshToken,
+                token_type=valueObject.tokenType,
             )
         except ValidationError as e:
             # バリデーションエラーの処理
@@ -73,9 +73,9 @@ class AuthService:
         try:
             valueObject = await self.dbRepository.refresh_token(refresh_token)
             return TokenResponse(
-                access_token=valueObject.access_token,
-                refresh_token=valueObject.refresh_token.refresh_token,
-                token_type=valueObject.token_type,
+                access_token=valueObject.accessToken,
+                refresh_token=valueObject.refreshToken.refreshToken,
+                token_type=valueObject.tokenType,
             )
         except ValidationError as e:
             # バリデーションエラーの処理
@@ -89,7 +89,7 @@ class AuthService:
         try:
             entity = await self.dbRepository.get_current_user(token)
             return UserResponse(
-                id=entity.id, email=entity.email, is_active=entity.is_active
+                id=entity.userId, email=entity.email, is_active=entity.isActive
             )
         except ValidationError as e:
             # バリデーションエラーの処理

@@ -21,12 +21,12 @@ class RecallCardEntity(BaseModel):
     # frozen=Trueでイミュータブルにする
     model_config = {"frozen": True}
 
-    recall_card_id: UUID = Field(..., description="暗記カードID")
-    user_id: UUID = Field(..., description="ユーザーID")
+    recallCardId: UUID = Field(..., description="暗記カードID")
+    userId: UUID = Field(..., description="ユーザーID")
     question: str = Field(..., description="質問")
     answer: str = Field(..., description="答案")
-    correct_point: int = Field(..., ge=0, description="正解ポイント")
-    review_deadline: datetime.datetime = Field(..., description="復習期限")
+    correctPoint: int = Field(..., ge=0, description="正解ポイント")
+    reviewDeadline: datetime.datetime = Field(..., description="復習期限")
 
     @staticmethod
     def calculate_similarity(user_answer: str, correct_answer: str) -> float:
@@ -51,22 +51,22 @@ class RecallCardEntity(BaseModel):
         # 1. 正解ポイントを1増やす
         # 2. 更新期限に対して（正解ポイント）の{REVIEW_DEADLINE_COEFFICIENT}乗分後加算する。
 
-        updated_correct_point = self.correct_point + 1
+        updated_correct_point = self.correctPoint + 1
 
         # 復習期限の計算ロジック
-        updated_review_deadline = self.review_deadline + datetime.timedelta(
+        updated_review_deadline = self.reviewDeadline + datetime.timedelta(
             minutes=updated_correct_point
             ** RecallCardConstants.REVIEW_DEADLINE_COEFFICIENT
         )
 
         # 新しいインスタンスを作成して返す
         return self.__class__(
-            recall_card_id=self.recall_card_id,
-            user_id=self.user_id,
+            recallCardId=self.recallCardId,
+            userId=self.userId,
             question=self.question,
             answer=self.answer,
-            correct_point=updated_correct_point,
-            review_deadline=updated_review_deadline,
+            correctPoint=updated_correct_point,
+            reviewDeadline=updated_review_deadline,
         )
 
     def _updateIncorrectRecallCardEntity(self) -> Self:
@@ -77,17 +77,17 @@ class RecallCardEntity(BaseModel):
 
         # 正解ポイントが負数にならないように制御
         updated_correct_point = max(
-            0, self.correct_point - RecallCardConstants.CORRECT_POINT_DECREMENT
+            0, self.correctPoint - RecallCardConstants.CORRECT_POINT_DECREMENT
         )
 
         # 新しいインスタンスを作成して返す
         return self.__class__(
-            recall_card_id=self.recall_card_id,
-            user_id=self.user_id,
+            recallCardId=self.recallCardId,
+            userId=self.userId,
             question=self.question,
             answer=self.answer,
-            correct_point=updated_correct_point,
-            review_deadline=self.review_deadline,
+            correctPoint=updated_correct_point,
+            reviewDeadline=self.reviewDeadline,
         )
 
 
@@ -98,7 +98,7 @@ class TestResultDomainServie:
     def validate(recall_cards: List[RecallCardEntity], users: List[UserEntity]) -> None:
         """データの整合性の確認を行う"""
 
-        user_ids = {user.id for user in users}
+        user_ids = {user.userId for user in users}
         for card in recall_cards:
-            if card.user_id not in user_ids:
+            if card.userId not in user_ids:
                 raise BadRequestError(detail=f"有効なユーザーを指定してください。")

@@ -1,5 +1,4 @@
 from typing import Annotated
-from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 
@@ -15,8 +14,8 @@ from app.endpoint.recall.recall_model import (
     NextRecallCardResponse,
     RecallCardAnswerRequest,
 )
-from app.services.auth.auth_service import AuthService
-from app.services.recall.recall_card_service import RecallCardService
+from app.services.auth_service import AuthService
+from app.services.recall_card_service import RecallCardService
 
 
 router = APIRouter(prefix="/recall", tags=["recall"])
@@ -70,7 +69,7 @@ async def answer_recall_card(
         current_user = await auth_service.get_current_user(token)
         # ユーザーIDに基づいて回答を処理
         await recall_card_service.update_recall_card(
-            UUID(current_user.id), recall_card_answer_request
+            current_user.id, recall_card_answer_request
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

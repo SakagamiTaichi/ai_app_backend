@@ -20,7 +20,7 @@ class RecallCardrepository(ABC):
         pass
 
     @abstractmethod
-    async def getMostOverdueDeadline(self, user_id: str) -> RecallCardEntity | None:
+    async def getMostOverdueDeadline(self, user_id: UUID) -> RecallCardEntity | None:
         """期限が最も過ぎている復習カードを取得する"""
         pass
 

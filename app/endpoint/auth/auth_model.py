@@ -1,3 +1,4 @@
+from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -27,7 +28,7 @@ class TokenResponse(BaseModel):
 class UserResponse(BaseModel):
     """ユーザー情報レスポンス用のスキーマ"""
 
-    id: str = Field(..., description="ユーザーID")
+    id: UUID = Field(..., description="ユーザーID")
     email: EmailStr = Field(..., description="ユーザーのメールアドレス")
     is_active: bool = Field(..., description="アクティブ状態")
 
@@ -54,7 +55,9 @@ class PasswordResetModel(BaseModel):
     """パスワードリセット実行用のスキーマ"""
 
     token: str = Field(..., description="パスワードリセットトークン")
-    new_password: str = Field(..., min_length=8, description="新しいパスワード (8文字以上)")
+    new_password: str = Field(
+        ..., min_length=8, description="新しいパスワード (8文字以上)"
+    )
 
 
 class PasswordResetResponse(BaseModel):

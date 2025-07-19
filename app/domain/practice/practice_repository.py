@@ -11,24 +11,28 @@ class PracticeRepository(ABC):
     """英語学習関連データのリポジトリインターフェース"""
 
     @abstractmethod
-    async def fetchAll(self, user_id: str, limit: int = 10, offset: int = 0) -> List[ConversationEntity]:
+    async def fetchAll(
+        self, user_id: UUID, limit: int = 10, offset: int = 0
+    ) -> List[ConversationEntity]:
         """特定ユーザーの会話セットの一覧を取得する"""
         pass
-    
+
     @abstractmethod
-    async def count_conversations(self, user_id: str) -> int:
+    async def count_conversations(self, user_id: UUID) -> int:
         """特定ユーザーの会話セット総数を取得する"""
         pass
 
     @abstractmethod
     async def reorder_conversations(
-        self, user_id: str, conversation_ids: List[UUID]
+        self, user_id: UUID, conversation_ids: List[UUID]
     ) -> None:
         """会話セットの順序を変更する"""
         pass
 
     @abstractmethod
-    async def fetch(self, conversation_id: UUID, user_id: str) -> List[MessageResponse]:
+    async def fetch(
+        self, conversation_id: UUID, user_id: UUID
+    ) -> List[MessageResponse]:
         """特定の会話セットに属するメッセージを取得する（アクセス権の確認あり）"""
         pass
 

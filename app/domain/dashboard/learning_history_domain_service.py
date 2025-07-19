@@ -23,7 +23,7 @@ class LearningHistoryDomainService:
 
         :return: 総学習時間（分単位）
         """
-        total_time = sum(history.learning_time for history in self.learning_histories)
+        total_time = sum(history.learningTime for history in self.learning_histories)
         return round(total_time / 60)  # 分単位に変換
 
     def get_total_learning_time_in_this_week(self) -> int:
@@ -35,7 +35,7 @@ class LearningHistoryDomainService:
         today = datetime.date.today()
         start_of_week = today - datetime.timedelta(days=today.weekday())
         total_time = sum(
-            history.learning_time
+            history.learningTime
             for history in self.learning_histories
             if history.date >= start_of_week
         )

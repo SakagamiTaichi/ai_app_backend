@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordBearer
-from app.services.chat.chat_service import ChatService
+from app.services.chat_service import ChatService
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 

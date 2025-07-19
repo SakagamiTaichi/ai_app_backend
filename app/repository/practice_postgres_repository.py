@@ -12,11 +12,11 @@ from app.domain.practice.test_result_entity import (
 )
 from app.domain.practice.practice_repository import PracticeRepository
 from app.endpoint.practice.practice_model import MessageResponse
-from app.schema.practice.models import (
-    ConversationModel,
-    MessageModel,
-    ConversationTestScoreModel,
-    MessageTestScoreModel,
+from app.schema.models import (
+    Conversations,
+    Messages,
+    ConversationTestScores,
+    MessageTestScores,
 )
 
 
@@ -26,14 +26,16 @@ class PracticePostgresRepository(PracticeRepository):
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def fetchAll(self, user_id: str, limit: int = 10, offset: int = 0) -> List[ConversationEntity]:
+    async def fetchAll(
+        self, user_id: UUID, limit: int = 10, offset: int = 0
+    ) -> List[ConversationEntity]:
         """特定ユーザーの会話セットの一覧を取得する"""
         try:
             result = await self.db.execute(
-                select(ConversationModel)
-                .options(selectinload(ConversationModel.messages))
-                .where(ConversationModel.user_id == user_id)
-                .order_by(desc(ConversationModel.created_at))
+                select(Conversations)
+                .options(selectinload(Conversations.messages))
+                .where(Conversations.user_id == user_id)
+                .order_by(desc(Conversations.created_at))
                 .limit(limit)
                 .offset(offset)
             )
@@ -43,10 +45,10 @@ class PracticePostgresRepository(PracticeRepository):
             return [
                 ConversationEntity(
                     id=conversation.id,  # type: ignore
-                    user_id=conversation.user_id,  # type: ignore
+                    userId=conversation.user_id,  # type: ignore
                     title=conversation.title,  # type: ignore
                     order=conversation.order,  # type: ignore
-                    created_at=conversation.created_at,  # type: ignore
+                    createdAt=conversation.created_at,  # type: ignore
                     messages=[],  # 空のリストを設定
                 )
                 for conversation in conversations
@@ -55,28 +57,30 @@ class PracticePostgresRepository(PracticeRepository):
         except Exception as e:
             raise
 
-    async def count_conversations(self, user_id: str) -> int:
+    async def count_conversations(self, user_id: UUID) -> int:
         """特定ユーザーの会話セット総数を取得する"""
         try:
             from sqlalchemy import func
+
             result = await self.db.execute(
-                select(func.count(ConversationModel.id))
-                .where(ConversationModel.user_id == user_id)
+                select(func.count(Conversations.id)).where(
+                    Conversations.user_id == user_id
+                )
             )
             return result.scalar() or 0
         except Exception as e:
             raise
 
     async def reorder_conversations(
-        self, user_id: str, conversation_ids: List[UUID]
+        self, user_id: UUID, conversation_ids: List[UUID]
     ) -> None:
         """会話セットの順序を変更する"""
         try:
             for order, conversation_id in enumerate(conversation_ids):
                 await self.db.execute(
-                    update(ConversationModel)
-                    .where(ConversationModel.user_id == user_id)
-                    .where(ConversationModel.id == conversation_id)
+                    update(Conversations)
+                    .where(Conversations.user_id == user_id)
+                    .where(Conversations.id == conversation_id)
                     .values(order=order)
                 )
 
@@ -86,12 +90,14 @@ class PracticePostgresRepository(PracticeRepository):
             await self.db.rollback()
             raise
 
-    async def fetch(self, conversation_id: UUID, user_id: str) -> List[MessageResponse]:
+    async def fetch(
+        self, conversation_id: UUID, user_id: UUID
+    ) -> List[MessageResponse]:
         """特定の会話セットに属するメッセージを取得する（アクセス権の確認あり）"""
         try:
             # まず会話セットの所有者を確認
             result = await self.db.execute(
-                select(ConversationModel).where(ConversationModel.id == conversation_id)
+                select(Conversations).where(Conversations.id == conversation_id)
             )
             conversation = result.scalar_one_or_none()
 
@@ -103,9 +109,9 @@ class PracticePostgresRepository(PracticeRepository):
 
             # メッセージを取得
             result = await self.db.execute(
-                select(MessageModel)
-                .where(MessageModel.conversation_id == conversation_id)
-                .order_by(MessageModel.message_order)
+                select(Messages)
+                .where(Messages.conversation_id == conversation_id)
+                .order_by(Messages.message_order)
             )
             messages = result.scalars().all()
 
@@ -127,7 +133,7 @@ class PracticePostgresRepository(PracticeRepository):
     async def create_message(self, message: MessageResponse) -> MessageResponse:
         """メッセージを作成する"""
         try:
-            new_message = MessageModel(
+            new_message = Messages(
                 conversation_id=message.conversation_id,
                 message_order=message.message_order,
                 speaker_number=message.speaker_number,
@@ -151,23 +157,23 @@ class PracticePostgresRepository(PracticeRepository):
         try:
             # 同時にメッセージも保存する
             messages = [
-                MessageModel(
-                    conversation_id=message.conversation_id,
-                    message_order=message.message_order,
-                    speaker_number=message.speaker_number,
-                    message_en=message.message_en,
-                    message_ja=message.message_ja,
-                    created_at=message.created_at,
+                Messages(
+                    conversation_id=message.conversationId,
+                    message_order=message.messageOrder,
+                    speaker_number=message.speakerNumber,
+                    message_en=message.messageEn,
+                    message_ja=message.messageJa,
+                    created_at=message.createdAt,
                 )
                 for message in conversation_set.messages  # type: ignore
             ]
 
-            new_conversation = ConversationModel(
+            new_conversation = Conversations(
                 id=conversation_set.id,
-                user_id=conversation_set.user_id,
+                user_id=conversation_set.userId,
                 title=conversation_set.title,
                 order=conversation_set.order,
-                created_at=conversation_set.created_at,
+                created_at=conversation_set.createdAt,
                 messages=messages,
             )
 
@@ -182,7 +188,7 @@ class PracticePostgresRepository(PracticeRepository):
         """テスト結果をデータベースに保存する"""
         try:
             # 会話テストスコアを保存
-            conversation_score = ConversationTestScoreModel(
+            conversation_score = ConversationTestScores(
                 conversation_id=test_result.conversation_id,
                 test_number=test_result.test_number,
                 test_score=test_result.overall_score,
@@ -194,12 +200,12 @@ class PracticePostgresRepository(PracticeRepository):
 
             # メッセージごとのスコアを保存
             for score in test_result.message_scores:
-                message_score = MessageTestScoreModel(
+                message_score = MessageTestScores(
                     conversation_id=test_result.conversation_id,
                     test_number=test_result.test_number,
                     message_order=score.message_order,
                     score=score.score,
-                    user_answer=score.user_answer,  # Save user answer
+                    user_answer=score.userAnswer,  # Save user answer
                 )
                 self.db.add(message_score)
 
@@ -217,10 +223,10 @@ class PracticePostgresRepository(PracticeRepository):
         try:
             # 最新のテスト結果を取得（メッセージスコアも含めて）
             result = await self.db.execute(
-                select(ConversationTestScoreModel)
-                .options(selectinload(ConversationTestScoreModel.message_scores))
-                .where(ConversationTestScoreModel.conversation_id == conversation_id)
-                .order_by(desc(ConversationTestScoreModel.test_number))
+                select(ConversationTestScores)
+                .options(selectinload(ConversationTestScores.message_scores))
+                .where(ConversationTestScores.conversation_id == conversation_id)
+                .order_by(desc(ConversationTestScores.test_number))
                 .limit(1)
             )
             latest_test = result.scalar_one_or_none()
@@ -233,9 +239,9 @@ class PracticePostgresRepository(PracticeRepository):
             for item in latest_test.message_scores:
                 # メッセージの詳細を取得
                 msg_result = await self.db.execute(
-                    select(MessageModel)
-                    .where(MessageModel.conversation_id == conversation_id)
-                    .where(MessageModel.message_order == item.message_order)
+                    select(Messages)
+                    .where(Messages.conversation_id == conversation_id)
+                    .where(Messages.message_order == item.message_order)
                 )
                 msg = msg_result.scalar_one_or_none()
 
@@ -243,9 +249,9 @@ class PracticePostgresRepository(PracticeRepository):
                     score = MessageScoreValueObject(
                         message_order=item.message_order,
                         score=item.score,
-                        is_correct=item.score >= 90.0,
-                        user_answer=item.user_answer,  # Retrieve user answer
-                        correct_answer=msg.message_en,  # type: ignore
+                        isCorrect=item.score >= 90.0,
+                        userAnswer=item.user_answer,  # Retrieve user answer
+                        correctAnswer=msg.message_en,  # type: ignore
                     )
                     message_scores.append(score)
 

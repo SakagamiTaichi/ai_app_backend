@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, desc
 from app.domain.recall.reacall_card_entity import RecallCardEntity
 from app.domain.recall.recall_card_repository import RecallCardrepository
-from app.schema.recall.models import RecallCardModel
+from app.schema.models import RecallCards
 
 
 class RecallCardPostgresRepository(RecallCardrepository):
@@ -18,20 +18,20 @@ class RecallCardPostgresRepository(RecallCardrepository):
         """全ての復習カードを取得する"""
         try:
             result = await self.db.execute(
-                select(RecallCardModel)
-                .where(RecallCardModel.user_id == user_id)
-                .order_by(desc(RecallCardModel.created_at))
+                select(RecallCards)
+                .where(RecallCards.user_id == user_id)
+                .order_by(desc(RecallCards.created_at))
             )
 
             recall_cards = result.scalars().all()
             return [
                 RecallCardEntity(
                     id=recall_card.recall_card_id,  # type: ignore
-                    user_id=recall_card.user_id,  # type: ignore
+                    userId=recall_card.user_id,  # type: ignore
                     question=recall_card.question,  # type: ignore
                     answer=recall_card.answer,  # type: ignore
-                    correct_point=recall_card.correct_point,  # type: ignore
-                    review_deadline=recall_card.review_deadline,  # type: ignore
+                    correctPoint=recall_card.correct_point,  # type: ignore
+                    reviewDeadline=recall_card.review_deadline,  # type: ignore
                     created_at=recall_card.created_at,  # type: ignore
                 )
                 for recall_card in recall_cards
@@ -45,42 +45,42 @@ class RecallCardPostgresRepository(RecallCardrepository):
         """復習カードIDに紐づく復習カードを取得する"""
         try:
             result = await self.db.execute(
-                select(RecallCardModel)
-                .where(RecallCardModel.recall_card_id == recall_card_id)
-                .where(RecallCardModel.user_id == user_id)
+                select(RecallCards)
+                .where(RecallCards.recall_card_id == recall_card_id)
+                .where(RecallCards.user_id == user_id)
             )
             recall_card = result.scalar_one_or_none()
             if recall_card:
                 return RecallCardEntity(
-                    recall_card_id=recall_card.recall_card_id,  # type: ignore
-                    user_id=recall_card.user_id,  # type: ignore
+                    recallCardId=recall_card.recall_card_id,  # type: ignore
+                    userId=recall_card.user_id,  # type: ignore
                     question=recall_card.question,  # type: ignore
                     answer=recall_card.answer,  # type: ignore
-                    correct_point=recall_card.correct_point,  # type: ignore
-                    review_deadline=recall_card.review_deadline,  # type: ignore
+                    correctPoint=recall_card.correct_point,  # type: ignore
+                    reviewDeadline=recall_card.review_deadline,  # type: ignore
                 )
             return None
         except Exception as e:
             raise
 
-    async def getMostOverdueDeadline(self, user_id: str) -> Optional[RecallCardEntity]:
+    async def getMostOverdueDeadline(self, user_id: UUID) -> Optional[RecallCardEntity]:
         """期限が最も過ぎている復習カードを1つだけ取得する"""
         try:
             result = await self.db.execute(
-                select(RecallCardModel)
-                .where(RecallCardModel.user_id == user_id)
-                .order_by(RecallCardModel.review_deadline)
+                select(RecallCards)
+                .where(RecallCards.user_id == user_id)
+                .order_by(RecallCards.review_deadline)
                 .limit(1)
             )
             recall_card = result.scalar_one_or_none()
             if recall_card:
                 return RecallCardEntity(
-                    recall_card_id=recall_card.recall_card_id,  # type: ignore
-                    user_id=recall_card.user_id,  # type: ignore
+                    recallCardId=recall_card.recall_card_id,  # type: ignore
+                    userId=recall_card.user_id,  # type: ignore
                     question=recall_card.question,  # type: ignore
                     answer=recall_card.answer,  # type: ignore
-                    correct_point=recall_card.correct_point,  # type: ignore
-                    review_deadline=recall_card.review_deadline,  # type: ignore
+                    correctPoint=recall_card.correct_point,  # type: ignore
+                    reviewDeadline=recall_card.review_deadline,  # type: ignore
                 )
             return None
         except Exception as e:
@@ -91,13 +91,13 @@ class RecallCardPostgresRepository(RecallCardrepository):
         try:
             for recall_card in recall_cards:
                 stmt = (
-                    update(RecallCardModel)
-                    .where(RecallCardModel.recall_card_id == recall_card.recall_card_id)
+                    update(RecallCards)
+                    .where(RecallCards.recall_card_id == recall_card.recallCardId)
                     .values(
                         question=recall_card.question,
                         answer=recall_card.answer,
-                        correct_point=recall_card.correct_point,
-                        review_deadline=recall_card.review_deadline,
+                        correct_point=recall_card.correctPoint,
+                        review_deadline=recall_card.reviewDeadline,
                     )
                 )
                 await self.db.execute(stmt)
@@ -113,13 +113,13 @@ class RecallCardPostgresRepository(RecallCardrepository):
         """復習カードを作成する"""
         try:
             models = [
-                RecallCardModel(
-                    recall_card_id=recall_card.recall_card_id,
-                    user_id=recall_card.user_id,
+                RecallCards(
+                    recall_card_id=recall_card.recallCardId,
+                    user_id=recall_card.userId,
                     question=recall_card.question,
                     answer=recall_card.answer,
-                    correct_point=recall_card.correct_point,
-                    review_deadline=recall_card.review_deadline,
+                    correct_point=recall_card.correctPoint,
+                    review_deadline=recall_card.reviewDeadline,
                 )
                 for recall_card in recall_cards
             ]

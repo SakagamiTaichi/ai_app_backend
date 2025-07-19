@@ -14,7 +14,7 @@ from app.domain.email.emai_repository import EmailRepository
 from app.domain.practice.practice_api_repotiroy import PracticeApiRepository
 from app.domain.practice.practice_repository import PracticeRepository
 from app.domain.recall.recall_card_repository import RecallCardrepository
-from app.services.auth.auth_service import AuthService
+from app.services.auth_service import AuthService
 from app.endpoint.practice.practice_model import (
     ConversationCreatedResponse,
     ConversationResponse,
@@ -26,7 +26,7 @@ from app.endpoint.practice.practice_model import (
     MessageTestResultSummary,
     RecallTestRequest,
 )
-from app.services.practicce.practice_service import PracticeService
+from app.services.practice_service import PracticeService
 
 router = APIRouter(prefix="/practice", tags=["practice"])
 

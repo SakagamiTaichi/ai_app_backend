@@ -9,10 +9,10 @@ from app.domain.auth.refresh_token_value_object import RefreshTokenValueObject
 from app.domain.auth.token_value_object import TokenValueObject
 from app.domain.auth.user_entity import UserEntity
 from app.domain.auth.password_reset_token_entity import PasswordResetTokenEntity
-from app.schema.auth.models import (
-    UserModel,
-    VerificationCodeModel,
-    PasswordResetTokenModel,
+from app.schema.models import (
+    Users,
+    VerificationCodes,
+    PasswordResetTokens,
 )
 from app.core.config import settings
 import secrets
@@ -28,11 +28,11 @@ class AuthPostgresRepository(AuthRepository):
         try:
             # 既存の未使用コードを無効化
             await self.db.execute(
-                VerificationCodeModel.__table__.update()
+                VerificationCodes.__table__.update()
                 .where(
                     and_(
-                        VerificationCodeModel.email == email,
-                        VerificationCodeModel.is_used == False,
+                        VerificationCodes.email == email,
+                        VerificationCodes.is_used == False,
                     )
                 )
                 .values(is_used=True)
@@ -45,7 +45,7 @@ class AuthPostgresRepository(AuthRepository):
             )
 
             # データベースに保存（認証試行回数とロック状態をリセット）
-            verification = VerificationCodeModel(
+            verification = VerificationCodes(
                 email=email,
                 code=code,
                 expires_at=expires_at,
@@ -66,15 +66,15 @@ class AuthPostgresRepository(AuthRepository):
         try:
             # 最新の認証コードを取得（有効期限内でis_used=False）
             result = await self.db.execute(
-                select(VerificationCodeModel)
+                select(VerificationCodes)
                 .where(
                     and_(
-                        VerificationCodeModel.email == email,
-                        VerificationCodeModel.is_used == False,
-                        VerificationCodeModel.expires_at > datetime.now(timezone.utc),
+                        VerificationCodes.email == email,
+                        VerificationCodes.is_used == False,
+                        VerificationCodes.expires_at > datetime.now(timezone.utc),
                     )
                 )
-                .order_by(VerificationCodeModel.created_at.desc())
+                .order_by(VerificationCodes.created_at.desc())
             )
             verification = result.scalar_one_or_none()
 
@@ -128,9 +128,7 @@ class AuthPostgresRepository(AuthRepository):
 
             # 既存ユーザーのチェック
             # ※User Enumeration Attackにつながるため、認証コード送信時にユーザーチェックを行うのではなく、新規登録時に行う
-            result = await self.db.execute(
-                select(UserModel).where(UserModel.email == email)
-            )
+            result = await self.db.execute(select(Users).where(Users.email == email))
 
             existing_user = result.scalar_one_or_none()
 
@@ -141,7 +139,7 @@ class AuthPostgresRepository(AuthRepository):
             hashed_password = SecurityUtils.get_password_hash(password)
 
             # 新規ユーザーの作成
-            new_user = UserModel(
+            new_user = Users(
                 email=email, hashed_password=hashed_password, is_active=True
             )
 
@@ -156,9 +154,9 @@ class AuthPostgresRepository(AuthRepository):
             )
 
             return TokenValueObject(
-                access_token=access_token,
-                refresh_token=RefreshTokenValueObject(refresh_token=refresh_token),
-                token_type="bearer",
+                accessToken=access_token,
+                refreshToken=RefreshTokenValueObject(refreshToken=refresh_token),
+                tokenType="bearer",
             )
 
         except Exception as e:
@@ -170,7 +168,7 @@ class AuthPostgresRepository(AuthRepository):
         try:
             # ユーザーの取得
             result = await self.db.execute(
-                select(UserModel).where(UserModel.email == loginInfo.email)
+                select(Users).where(Users.email == loginInfo.email)
             )
             user = result.scalar_one_or_none()
 
@@ -186,9 +184,9 @@ class AuthPostgresRepository(AuthRepository):
             refresh_token = SecurityUtils.create_refresh_token({"sub": str(user.id)})
 
             return TokenValueObject(
-                access_token=access_token,
-                refresh_token=RefreshTokenValueObject(refresh_token=refresh_token),
-                token_type="bearer",
+                accessToken=access_token,
+                refreshToken=RefreshTokenValueObject(refreshToken=refresh_token),
+                tokenType="bearer",
             )
 
         except Exception as e:
@@ -208,9 +206,9 @@ class AuthPostgresRepository(AuthRepository):
             new_refresh_token = SecurityUtils.create_refresh_token({"sub": user_id})
 
             return TokenValueObject(
-                access_token=access_token,
-                refresh_token=RefreshTokenValueObject(refresh_token=new_refresh_token),
-                token_type="bearer",
+                accessToken=access_token,
+                refreshToken=RefreshTokenValueObject(refreshToken=new_refresh_token),
+                tokenType="bearer",
             )
 
         except Exception as e:
@@ -219,16 +217,16 @@ class AuthPostgresRepository(AuthRepository):
     async def get_user(self, user_id: str) -> UserEntity:
         """ユーザー情報を取得する"""
         try:
-            result = await self.db.execute(
-                select(UserModel).where(UserModel.id == user_id)
-            )
+            result = await self.db.execute(select(Users).where(Users.id == user_id))
             user = result.scalar_one_or_none()
 
             if not user:
                 raise NotFoundError(detail="指定されたユーザーは存在しません。")
 
             return UserEntity(
-                id=str(user.id), email=str(user.email), is_active=bool(user.is_active)
+                userId=user.id,  # type: ignore
+                email=str(user.email),
+                isActive=bool(user.is_active),
             )
 
         except Exception as e:
@@ -251,9 +249,7 @@ class AuthPostgresRepository(AuthRepository):
         """パスワードリセットトークンを生成して保存する"""
         try:
             # ユーザーが存在するかチェック
-            result = await self.db.execute(
-                select(UserModel).where(UserModel.email == email)
-            )
+            result = await self.db.execute(select(Users).where(Users.email == email))
             user = result.scalar_one_or_none()
             if not user:
                 # セキュリティ上、メールアドレスが存在しない場合でもエラーにしない
@@ -262,11 +258,11 @@ class AuthPostgresRepository(AuthRepository):
 
             # 既存の未使用トークンを無効化
             await self.db.execute(
-                PasswordResetTokenModel.__table__.update()
+                PasswordResetTokens.__table__.update()
                 .where(
                     and_(
-                        PasswordResetTokenModel.email == email,
-                        PasswordResetTokenModel.is_used == False,
+                        PasswordResetTokens.email == email,
+                        PasswordResetTokens.is_used == False,
                     )
                 )
                 .values(is_used=True)
@@ -279,7 +275,7 @@ class AuthPostgresRepository(AuthRepository):
             )
 
             # データベースに保存
-            reset_token = PasswordResetTokenModel(
+            reset_token = PasswordResetTokens(
                 email=email, token=token, expires_at=expires_at, is_used=False
             )
             self.db.add(reset_token)
@@ -295,11 +291,11 @@ class AuthPostgresRepository(AuthRepository):
         """パスワードリセットトークンを取得する"""
         try:
             result = await self.db.execute(
-                select(PasswordResetTokenModel).where(
+                select(PasswordResetTokens).where(
                     and_(
-                        PasswordResetTokenModel.token == token,
-                        PasswordResetTokenModel.is_used == False,
-                        PasswordResetTokenModel.expires_at > datetime.now(timezone.utc),
+                        PasswordResetTokens.token == token,
+                        PasswordResetTokens.is_used == False,
+                        PasswordResetTokens.expires_at > datetime.now(timezone.utc),
                     )
                 )
             )
@@ -312,10 +308,10 @@ class AuthPostgresRepository(AuthRepository):
                 id=str(reset_token.id),
                 email=reset_token.email,  # type: ignore
                 token=reset_token.token,  # type: ignore
-                is_used=reset_token.is_used,  # type: ignore
-                expires_at=reset_token.expires_at,  # type: ignore
-                created_at=reset_token.created_at,  # type: ignore
-                used_at=reset_token.used_at,  # type: ignore
+                isUsed=reset_token.is_used,  # type: ignore
+                expiresAt=reset_token.expires_at,  # type: ignore
+                createdAt=reset_token.created_at,  # type: ignore
+                usedAt=reset_token.used_at,  # type: ignore
             )
 
         except Exception as e:
@@ -329,7 +325,7 @@ class AuthPostgresRepository(AuthRepository):
 
             # ユーザーを取得
             result = await self.db.execute(
-                select(UserModel).where(UserModel.email == reset_token_entity.email)
+                select(Users).where(Users.email == reset_token_entity.email)
             )
             user = result.scalar_one_or_none()
 
@@ -342,9 +338,7 @@ class AuthPostgresRepository(AuthRepository):
 
             # トークンを使用済みにマーク
             result = await self.db.execute(
-                select(PasswordResetTokenModel).where(
-                    PasswordResetTokenModel.token == token
-                )
+                select(PasswordResetTokens).where(PasswordResetTokens.token == token)
             )
             db_token = result.scalar_one()
             db_token.is_used = True  # type: ignore

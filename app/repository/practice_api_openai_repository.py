@@ -64,7 +64,7 @@ class PracticeApiOpenAiRepository(PracticeApiRepository):
             title=generated_conversation.title,  # type: ignore
             messages=[
                 GeneratedMessageValueObject(
-                    message_en=message.message_en, message_ja=message.message_ja
+                    messageEn=message.message_en, messageJa=message.message_ja
                 )
                 for message in generated_conversation.messages  # type: ignore
             ],

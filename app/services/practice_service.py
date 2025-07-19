@@ -42,7 +42,7 @@ class PracticeService:
         self.apiRepository = apiRepository
 
     async def ai_registration(
-        self, user_id: str, request: ConversationSetCreateRequest
+        self, user_id: UUID, request: ConversationSetCreateRequest
     ) -> ConversationCreatedResponse:
         """AIによって会話を登録する"""
         try:
@@ -62,18 +62,18 @@ class PracticeService:
 
             conversation_set = ConversationEntity(
                 id=conversation_id,
-                user_id=UUID(user_id),
+                userId=user_id,
                 title=valueObject.title,
                 order=order,
-                created_at=now,
+                createdAt=now,
                 messages=[
                     MessageEntity(
-                        conversation_id=conversation_id,
-                        message_order=i + 1,
-                        speaker_number=i % 2,
-                        message_en=message.message_en,
-                        message_ja=message.message_ja,
-                        created_at=now,
+                        conversationId=conversation_id,
+                        messageOrder=i + 1,
+                        speakerNumber=i % 2,
+                        messageEn=message.messageEn,
+                        messageJa=message.messageJa,
+                        createdAt=now,
                     )
                     for i, message in enumerate(valueObject.messages)  # type: ignore
                 ],
@@ -85,12 +85,12 @@ class PracticeService:
             # 暗記カードに保存
             recall_cards = [
                 RecallCardEntity(
-                    recall_card_id=uuid4(),
-                    user_id=UUID(user_id),
-                    question=message.message_ja,
-                    answer=message.message_en,
-                    correct_point=0,
-                    review_deadline=datetime.now(),
+                    recallCardId=uuid4(),
+                    userId=user_id,
+                    question=message.messageJa,
+                    answer=message.messageEn,
+                    correctPoint=0,
+                    reviewDeadline=datetime.now(),
                 )
                 for message in valueObject.messages
             ]
@@ -105,7 +105,9 @@ class PracticeService:
             # エラーハンドリング
             raise
 
-    async def get_conversations(self, user_id: str, limit: int = 10, offset: int = 0) -> ConversationsResponse:
+    async def get_conversations(
+        self, user_id: UUID, limit: int = 10, offset: int = 0
+    ) -> ConversationsResponse:
         """ユーザーの会話一覧を取得する"""
         try:
             # ユーザーの会話一覧を取得
@@ -114,14 +116,14 @@ class PracticeService:
             )
             # 総数を取得
             total_count = await self.dbRepository.count_conversations(user_id)
-            
+
             conversations = [
                 Conversation(
                     id=entity.id,
-                    user_id=entity.user_id,
+                    user_id=entity.userId,
                     title=entity.title,
                     order=entity.order,
-                    created_at=entity.created_at,
+                    created_at=entity.createdAt,
                 )
                 for entity in entities
             ]
@@ -130,7 +132,7 @@ class PracticeService:
                 conversations=conversations,
                 total_count=total_count,
                 limit=limit,
-                offset=offset
+                offset=offset,
             )
         except ValidationError as e:
             # バリデーションエラーの処理
@@ -140,7 +142,7 @@ class PracticeService:
             raise
 
     async def reorder_conversations(
-        self, user_id: str, conversation_ids: List[UUID]
+        self, user_id: UUID, conversation_ids: List[UUID]
     ) -> None:
         try:
             # ユーザーの会話一覧を取得
@@ -164,7 +166,7 @@ class PracticeService:
             raise
 
     async def get_conversation(
-        self, conversation_id: UUID, user_id: str
+        self, conversation_id: UUID, user_id: UUID
     ) -> ConversationResponse:
         """会話セットのメッセージ一覧を取得する"""
         try:
@@ -269,7 +271,7 @@ class PracticeService:
         return self.join_tokens(user_html), self.join_tokens(correct_html)
 
     async def post_test_results(
-        self, user_id: str, request: RecallTestRequest
+        self, user_id: UUID, request: RecallTestRequest
     ) -> MessageTestResultSummary:
         """テスト結果を処理し、データベースに保存する"""
         try:
@@ -337,7 +339,7 @@ class PracticeService:
                         message_order=score.message_order,
                         user_answer=user_html,
                         correct_answer=correct_html,
-                        is_correct=score.is_correct,
+                        is_correct=score.isCorrect,
                         similarity_to_correct=score.score,
                         last_similarity_to_correct=last_score,
                     )

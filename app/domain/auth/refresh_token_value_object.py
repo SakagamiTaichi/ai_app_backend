@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 class RefreshTokenValueObject(BaseModel):
     """認証トークン用のスキーマ"""
 
-    refresh_token: str = Field(
+    refreshToken: str = Field(
         ...,
         description="リフレッシュトークン",
         min_length=22,

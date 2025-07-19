@@ -13,7 +13,7 @@ class RecallCardService:
     def __init__(self, repository: RecallCardrepository):
         self.dbRepository = repository
 
-    async def get_next_recall_card(self, user_id: str) -> NextRecallCardResponse:
+    async def get_next_recall_card(self, user_id: UUID) -> NextRecallCardResponse:
         """次の暗記カードを取得する"""
 
         recall_card = await self.dbRepository.getMostOverdueDeadline(user_id)
@@ -21,7 +21,7 @@ class RecallCardService:
             raise NotFoundError("次の暗記カードはありません。")
 
         return NextRecallCardResponse(
-            recall_card_id=recall_card.recall_card_id,
+            recall_card_id=recall_card.recallCardId,
             question=recall_card.question,
         )
 

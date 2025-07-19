@@ -6,17 +6,6 @@ from app.core.dependencies.repositories import get_auth_repository, get_mail_rep
 from app.domain.auth.auth_repository import AuthRepository
 from app.domain.email.emai_repository import EmailRepository
 
-# from app.model.auth.auth_model import (
-#     TokenResponse,
-#     SignUpRequestModel,
-#     UserLoginRequest,
-#     UserResponse,
-#     VerificationCodeRequest,
-#     VerificationCodeResponse,
-#     PasswordResetRequestModel,
-#     PasswordResetModel,
-#     PasswordResetResponse,
-# )
 from app.endpoint.auth.auth_model import (
     PasswordResetModel,
     PasswordResetRequestModel,
@@ -28,7 +17,7 @@ from app.endpoint.auth.auth_model import (
     VerificationCodeRequest,
     VerificationCodeResponse,
 )
-from app.services.auth.auth_service import AuthService
+from app.services.auth_service import AuthService
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])

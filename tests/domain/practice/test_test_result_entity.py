@@ -18,15 +18,15 @@ class TestMessageScoreValueObject:
         score = MessageScoreValueObject(
             message_order=1,
             score=85.5,
-            is_correct=True,
-            user_answer="Hello world",
-            correct_answer="Hello world",
+            isCorrect=True,
+            userAnswer="Hello world",
+            correctAnswer="Hello world",
         )
 
         assert score.message_order == 1
         assert score.score == 85.5
-        assert score.is_correct is True
-        assert score.user_answer == "Hello world"
+        assert score.isCorrect is True
+        assert score.userAnswer == "Hello world"
 
     def test_init_invalid_message_order(self):
         """不正なmessage_orderでの作成時のバリデーションエラーをテスト"""
@@ -34,9 +34,9 @@ class TestMessageScoreValueObject:
             MessageScoreValueObject(
                 message_order=0,  # 1未満は無効
                 score=85.5,
-                is_correct=True,
-                user_answer="Hello",
-                correct_answer="Hello",
+                isCorrect=True,
+                userAnswer="Hello",
+                correctAnswer="Hello",
             )
 
     def test_init_invalid_score_range(self):
@@ -45,18 +45,18 @@ class TestMessageScoreValueObject:
             MessageScoreValueObject(
                 message_order=1,
                 score=101,  # 100超過は無効
-                is_correct=True,
-                user_answer="Hello",
-                correct_answer="Hello",
+                isCorrect=True,
+                userAnswer="Hello",
+                correctAnswer="Hello",
             )
 
         with pytest.raises(ValueError):
             MessageScoreValueObject(
                 message_order=1,
                 score=-1,  # 0未満は無効
-                is_correct=True,
-                user_answer="Hello",
-                correct_answer="Hello",
+                isCorrect=True,
+                userAnswer="Hello",
+                correctAnswer="Hello",
             )
 
     def test_tokenize_basic_text(self):
@@ -118,9 +118,9 @@ class TestMessageScoreValueObject:
         score = MessageScoreValueObject(
             message_order=1,
             score=85.5,
-            is_correct=True,
-            user_answer="Hello, world!",
-            correct_answer="Hello world",
+            isCorrect=True,
+            userAnswer="Hello, world!",
+            correctAnswer="Hello world",
         )
 
         tokens = score.get_tokenized_user_answer
@@ -135,8 +135,8 @@ class TestMessageScoreValueObject:
 
         assert score.message_order == 1
         assert score.score == 100.0
-        assert score.is_correct is True
-        assert score.user_answer == "Hello world"
+        assert score.isCorrect is True
+        assert score.userAnswer == "Hello world"
 
     def test_factory_method_below_threshold(self):
         """閾値以下のスコア時のfactoryメソッドをテスト"""
@@ -146,7 +146,7 @@ class TestMessageScoreValueObject:
 
         assert score.message_order == 2
         assert score.score < TestConstants.CORRECT_THRESHOLD
-        assert score.is_correct is False
+        assert score.isCorrect is False
 
 
 class TestTestResultEntity:
@@ -159,9 +159,9 @@ class TestTestResultEntity:
             MessageScoreValueObject(
                 message_order=1,
                 score=90.0,
-                is_correct=True,
-                user_answer="Hello",
-                correct_answer="Hello",
+                isCorrect=True,
+                userAnswer="Hello",
+                correctAnswer="Hello",
             )
         ]
 
@@ -187,9 +187,9 @@ class TestTestResultEntity:
                 MessageScoreValueObject(
                     message_order=1,
                     score=90.0,
-                    is_correct=True,
-                    user_answer="Hello",
-                    correct_answer="Hello",
+                    isCorrect=True,
+                    userAnswer="Hello",
+                    correctAnswer="Hello",
                 )
             ],
         )
@@ -213,9 +213,9 @@ class TestTestResultEntity:
             MessageScoreValueObject(
                 message_order=1,
                 score=85.5,
-                is_correct=True,
-                user_answer="Hello",
-                correct_answer="Hello",
+                isCorrect=True,
+                userAnswer="Hello",
+                correctAnswer="Hello",
             )
         ]
 
@@ -234,23 +234,23 @@ class TestTestResultEntity:
             MessageScoreValueObject(
                 message_order=1,
                 score=80.0,
-                is_correct=False,
-                user_answer="Hello",
-                correct_answer="Hi",
+                isCorrect=False,
+                userAnswer="Hello",
+                correctAnswer="Hi",
             ),
             MessageScoreValueObject(
                 message_order=2,
                 score=90.0,
-                is_correct=True,
-                user_answer="Good",
-                correct_answer="Good",
+                isCorrect=True,
+                userAnswer="Good",
+                correctAnswer="Good",
             ),
             MessageScoreValueObject(
                 message_order=3,
                 score=85.0,
-                is_correct=True,
-                user_answer="Yes",
-                correct_answer="Yes",
+                isCorrect=True,
+                userAnswer="Yes",
+                correctAnswer="Yes",
             ),
         ]
 
@@ -285,9 +285,9 @@ class TestTestResultEntity:
             MessageScoreValueObject(
                 message_order=1,
                 score=85.0,
-                is_correct=True,
-                user_answer="Hello",
-                correct_answer="Hello",
+                isCorrect=True,
+                userAnswer="Hello",
+                correctAnswer="Hello",
             )
         ]
 
@@ -306,9 +306,9 @@ class TestTestResultEntity:
             MessageScoreValueObject(
                 message_order=1,
                 score=75.0,
-                is_correct=False,
-                user_answer="Hello",
-                correct_answer="Hi",
+                isCorrect=False,
+                userAnswer="Hello",
+                correctAnswer="Hi",
             )
         ]
 
@@ -327,9 +327,9 @@ class TestTestResultEntity:
             MessageScoreValueObject(
                 message_order=1,
                 score=80.0,
-                is_correct=False,
-                user_answer="Hello",
-                correct_answer="Hi",
+                isCorrect=False,
+                userAnswer="Hello",
+                correctAnswer="Hi",
             )
         ]
 
@@ -390,7 +390,7 @@ class TestTestResultEntity:
 
         assert len(result.message_scores) == 2
         assert result.message_scores[0].score == 100.0
-        assert result.message_scores[0].is_correct is True
+        assert result.message_scores[0].isCorrect is True
         assert result.message_scores[1].score < 100.0
 
 
@@ -440,9 +440,9 @@ class TestIntegration:
 
         # 結果の検証
         assert len(result.message_scores) == 3
-        assert result.message_scores[0].is_correct is True  # 完全一致
-        assert result.message_scores[1].is_correct is True  # 完全一致
-        assert result.message_scores[2].is_correct is False  # 部分一致のみ
+        assert result.message_scores[0].isCorrect is True  # 完全一致
+        assert result.message_scores[1].isCorrect is True  # 完全一致
+        assert result.message_scores[2].isCorrect is False  # 部分一致のみ
 
         # 全体スコアが適切に計算されることを確認
         assert 0 <= result.overall_score <= 100
@@ -480,4 +480,4 @@ class TestIntegration:
 
         assert len(result.message_scores) == 1
         assert result.message_scores[0].score == 0.0
-        assert result.message_scores[0].is_correct is False
+        assert result.message_scores[0].isCorrect is False

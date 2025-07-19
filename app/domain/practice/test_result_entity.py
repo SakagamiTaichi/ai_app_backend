@@ -20,9 +20,9 @@ class MessageScoreValueObject(BaseModel):
 
     message_order: int = Field(ge=1, description="メッセージの順番（1以上）")
     score: float = Field(ge=0, le=100, description="スコア（0〜100）")
-    is_correct: bool
-    user_answer: str
-    correct_answer: str
+    isCorrect: bool
+    userAnswer: str
+    correctAnswer: str
 
     @staticmethod
     def tokenize(text: str) -> List[str]:
@@ -52,13 +52,13 @@ class MessageScoreValueObject(BaseModel):
     @property
     def get_tokenized_user_answer(self) -> List[str]:
         """ユーザーの回答をトークン化して返す"""
-        return self.tokenize(self.user_answer)
+        return self.tokenize(self.userAnswer)
 
     @computed_field
     @property
     def get_tokenized_correct_answer(self) -> List[str]:
         """正解の回答をトークン化して返す"""
-        return self.tokenize(self.correct_answer)
+        return self.tokenize(self.correctAnswer)
 
     @classmethod
     def factory(
@@ -69,9 +69,9 @@ class MessageScoreValueObject(BaseModel):
         return cls(
             message_order=message_order,
             score=score,
-            is_correct=score >= TestConstants.CORRECT_THRESHOLD,
-            user_answer=user_answer,
-            correct_answer=correct_answer,
+            isCorrect=score >= TestConstants.CORRECT_THRESHOLD,
+            userAnswer=user_answer,
+            correctAnswer=correct_answer,
         )
 
 
