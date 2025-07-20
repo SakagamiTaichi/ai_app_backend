@@ -52,3 +52,23 @@ class QuizPostgresRepository(QuizRepository):
             ]
         except Exception as e:
             raise
+
+    async def getAllByQuizTypeId(self, quizTypeId: UUID) -> List[QuizEntity]:
+        """指定されたタイプの全てのクイズを取得する"""
+        try:
+            stmt = select(Quiz).where(Quiz.quiz_type_id == quizTypeId)
+            result = await self.db.execute(stmt)
+            quizzes = result.scalars().all()
+
+            return [
+                QuizEntity(
+                    quizId=quiz.quiz_id,  # type: ignore
+                    question=quiz.question,  # type: ignore
+                    modelAnswer=quiz.model_answer,  # type: ignore
+                    quizTypeId=quiz.quiz_type_id,  # type: ignore
+                    difficulty=DifficultyEnum(quiz.difficulty),  # type: ignore
+                )
+                for quiz in quizzes
+            ]
+        except Exception as e:
+            raise e

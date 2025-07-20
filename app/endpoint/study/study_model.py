@@ -19,18 +19,12 @@ class QuizTypesResponse(BaseModel):
 
 
 class QuizResponse(BaseModel):
-    """クイズを表すモデル"""
+    """クイズのレスポンスモデル"""
 
     id: UUID = Field(..., description="クイズID")
     content: str = Field(..., description="クイズの内容")
     type: str = Field(..., description="クイズの種類名")
     difficulty: str = Field(..., description="クイズの難易度名")
-
-
-class QuizzesResponse(BaseModel):
-    """クイズのレスポンスモデル"""
-
-    quizzes: List[QuizResponse] = Field(..., description="クイズのリスト")
 
 
 class StudyRecordsResponse(BaseModel):

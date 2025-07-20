@@ -16,3 +16,8 @@ class QuizRepository(ABC):
     async def getAll(self) -> List[QuizEntity]:
         """指定されたIDのクイズを除いた全てのクイズを取得する"""
         pass
+
+    @abstractmethod
+    async def getAllByQuizTypeId(self, quizTypeId: UUID) -> List[QuizEntity]:
+        """指定されたタイプの全てのクイズを取得する"""
+        pass

@@ -29,7 +29,7 @@ from app.endpoint.study.study_model import (
     QuizStudyRecordResponse,
     QuizStudyRecordsResponse,
     QuizTypesResponse,
-    QuizzesResponse,
+    QuizResponse,
 )
 from app.services.auth_service import AuthService
 from app.services.study_service import StudyService
@@ -86,10 +86,11 @@ async def get_quizzes(
     study_service: Annotated[StudyService, Depends(get_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
     quiz_type_id: Annotated[Optional[UUID], Query(description="クイズの種類ID")] = None,
-) -> QuizzesResponse:
-    """クイズをまとめて取得するエンドポイント"""
+    question_type: Annotated[Optional[str], Query(description="復習・新規")] = None,
+) -> QuizResponse:
+    """クイズを取得するエンドポイント"""
     current_user = await auth_service.get_current_user(token)
-    return await study_service.get_quizzes(current_user.id, quiz_type_id)
+    return await study_service.get_quizzes(current_user.id, quiz_type_id, question_type)
 
 
 @router.get("/records")

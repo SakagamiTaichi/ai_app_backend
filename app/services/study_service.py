@@ -1,7 +1,6 @@
 import datetime
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID, uuid4
-from app.domain.quiz.quize_entity import QuizEntity
 from app.domain.quiz.quize_repostiroy import QuizRepository
 
 from app.domain.quizType.quiz_type_repository import QuizTypeRepository
@@ -21,7 +20,7 @@ from app.endpoint.study.study_model import (
     QuizStudyRecordsResponse,
     QuizTypeResponse,
     QuizTypesResponse,
-    QuizzesResponse,
+    QuizResponse,
     StudyRecordsResponse,
     UserAnswerResponse,
 )
@@ -58,44 +57,40 @@ class StudyService:
         )
 
     async def get_quizzes(
-        self, user_id: UUID, quizTypeId: Optional[UUID]
-    ) -> QuizzesResponse:
+        self, user_id: UUID, quizTypeId: Optional[UUID], questionType: Optional[str]
+    ) -> QuizResponse:
         """クイズの一覧を取得する。"""
         quizzes = await self.quizRepository.getAll()
 
         userAnswerDomainService = UserAnswerDomainService(
             quizRepository=self.quizRepository,
             userAnswerRepository=self.userAnswerRepository,
+            reviewScheduleRepository=self.reviewScheduleRepository,
         )
 
         # ユーザーが未回答のクイズ一覧を取得する
-        not_answered_quizzes = await userAnswerDomainService.get_not_answered_quizzes(
-            user_id, quizTypeId
+        not_answered_quiz = await userAnswerDomainService.get_next_quiz(
+            user_id, quizTypeId, questionType
         )
 
         # 5つに絞る
-        not_answered_quizzes: List[QuizEntity] = not_answered_quizzes[:5]
+        # not_answered_quiz: QuizEntity = not_answered_quizzes[0]
 
         # クイズの種類一覧を取得する
         quiz_types = await self.quiZTypeRepository.getAll()
 
-        return QuizzesResponse(
-            quizzes=[
-                QuizResponse(
-                    id=quiz.quizId,
-                    content=quiz.question,
-                    type=next(
-                        (
-                            quiz_type.name
-                            for quiz_type in quiz_types
-                            if quiz_type.quizTypeId == quiz.quizTypeId
-                        ),
-                        "",
-                    ),
-                    difficulty=quiz.difficulty.name,
-                )
-                for quiz in not_answered_quizzes
-            ]
+        return QuizResponse(
+            id=not_answered_quiz.quizId,
+            content=not_answered_quiz.question,
+            type=next(
+                (
+                    quiz_type.name
+                    for quiz_type in quiz_types
+                    if quiz_type.quizTypeId == not_answered_quiz.quizTypeId
+                ),
+                "",
+            ),
+            difficulty=not_answered_quiz.difficulty.name,
         )
 
     async def get_study_records(self, user_id: UUID) -> QuizStudyRecordsResponse:

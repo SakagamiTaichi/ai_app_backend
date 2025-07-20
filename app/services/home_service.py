@@ -46,6 +46,7 @@ class HomeService:
         userAnswerDomainService = UserAnswerDomainService(
             quizRepository=self.quizRepository,
             userAnswerRepository=self.userAnswerRepository,
+            reviewScheduleRepository=self.reviewScheduleRepository,
         )
 
         # TODO 2回もデータベースから取得している。パフォーマンスの改善の余地あり。
@@ -59,7 +60,7 @@ class HomeService:
             reviewShceduleRepository=self.reviewScheduleRepository
         )
 
-        pending_review_count = (
+        pending_review_count, complete_review_count = (
             await reviewScheduleDomainService.get_after_deadline_count(user_id)
         )
 
@@ -67,6 +68,7 @@ class HomeService:
             message=greeting,
             continuous_learning_days=studyRecord.getContinuousLearningDays(),
             pending_review_count=pending_review_count,
+            complete_review_count=complete_review_count,
             all_quiz_count=all_quiz_count,
             average_score=average_score,
         )
