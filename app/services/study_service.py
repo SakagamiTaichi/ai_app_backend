@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 from app.domain.quiz.quize_repostiroy import QuizRepository
 
 from app.domain.quizType.quiz_type_repository import QuizTypeRepository
+from app.domain.reviewSchedule.review_schedule_entity import ReviewScheduleEntity
 from app.domain.reviewSchedule.review_schedule_repository import (
     ReviewScheduleRepository,
 )
@@ -68,29 +69,26 @@ class StudyService:
             reviewScheduleRepository=self.reviewScheduleRepository,
         )
 
-        # ユーザーが未回答のクイズ一覧を取得する
-        not_answered_quiz = await userAnswerDomainService.get_next_quiz(
+        # ユーザーの次のクイズを取得する
+        next_quiz = await userAnswerDomainService.get_next_quiz(
             user_id, quizTypeId, questionType
         )
-
-        # 5つに絞る
-        # not_answered_quiz: QuizEntity = not_answered_quizzes[0]
 
         # クイズの種類一覧を取得する
         quiz_types = await self.quiZTypeRepository.getAll()
 
         return QuizResponse(
-            id=not_answered_quiz.quizId,
-            content=not_answered_quiz.question,
+            id=next_quiz.quizId,
+            content=next_quiz.question,
             type=next(
                 (
                     quiz_type.name
                     for quiz_type in quiz_types
-                    if quiz_type.quizTypeId == not_answered_quiz.quizTypeId
+                    if quiz_type.quizTypeId == next_quiz.quizTypeId
                 ),
                 "",
             ),
-            difficulty=not_answered_quiz.difficulty.name,
+            difficulty=next_quiz.difficulty.name,
         )
 
     async def get_study_records(self, user_id: UUID) -> QuizStudyRecordsResponse:
@@ -208,6 +206,41 @@ class StudyService:
 
         # ユーザーの回答、及びAIの回答を保存する
         await self.userAnswerRepository.create(userAnswerEntity=user_answer_entity)
+
+        # ユーザーの復習日程を更新する
+        # 現在のユーザーの復習日程を取得する
+        review_schedule = await self.reviewScheduleRepository.get_schedule(
+            user_id, quiz.quizId
+        )
+
+        # 復習日程が存在しない場合は新規作成
+        if review_schedule is None:
+            review_schedule_entity = ReviewScheduleEntity(
+                reviewScheduleId=uuid4(),
+                userId=user_id,
+                quizId=quiz.quizId,
+                reviewDeadLine=datetime.datetime.now()
+                + datetime.timedelta(seconds=1),  # 1秒後を設定
+            )
+            review_schedule_entity = await self.reviewScheduleRepository.create(
+                reviewSchedule=review_schedule_entity
+            )
+        else:
+            # 今までのユーザーの回答を取得
+            user_answers = await self.userAnswerRepository.getAllByQuizIdUserId(
+                user_id, quiz.quizId
+            )
+
+            # 点数のリストを取得
+            scores = [answer.aiEvaluation.score for answer in user_answers]
+
+            # 復習日程が存在する場合は更新
+            review_schedule_entity = review_schedule_entity = review_schedule.update(
+                scores=scores
+            )
+            review_schedule_entity = await self.reviewScheduleRepository.update(
+                reviewSchedule=review_schedule_entity
+            )
 
         return QuizAnswerResponse(
             score=evaluation.score,

@@ -89,7 +89,9 @@ class StudyRecords(Base):
 
     # リレーションシップ
     user = relationship("Users", back_populates="study_record")
-    daily_study_records = relationship("DailyStudyRecords", back_populates="study_record")
+    daily_study_records = relationship(
+        "DailyStudyRecords", back_populates="study_record"
+    )
 
 
 class DailyStudyRecords(Base):
@@ -159,6 +161,7 @@ class QuizType(Base):
 
     quiz_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), nullable=False, unique=True)
+    abbreviation = Column(String(50), nullable=True, unique=True, default=None)
     description = Column(String(300), nullable=True)
     created_at = Column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
