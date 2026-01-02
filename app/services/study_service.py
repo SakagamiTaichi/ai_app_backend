@@ -82,7 +82,7 @@ class StudyService:
             content=next_quiz.question,
             type=next(
                 (
-                    quiz_type.name
+                    quiz_type.abbreviation
                     for quiz_type in quiz_types
                     if quiz_type.quizTypeId == next_quiz.quizTypeId
                 ),
@@ -99,19 +99,17 @@ class StudyService:
         quizeTypes = await self.quiZTypeRepository.getAll()
 
         return QuizStudyRecordsResponse(
-            quiz_types=QuizTypesResponse(
-                quiz_types=[
-                    QuizTypeResponse(
-                        id=quizType.quizTypeId,
-                        name=quizType.name,
-                        description=quizType.description,
-                    )
-                    for quizType in quizeTypes
-                ]
-            ),
+            quiz_types=[
+                QuizTypeResponse(
+                    id=quizType.quizTypeId,
+                    name=quizType.abbreviation,
+                    description=quizType.description,
+                )
+                for quizType in quizeTypes
+            ],
             records=[
                 StudyRecordsResponse(
-                    user_answer_id=answer.quizId,
+                    user_answer_id=answer.userAnswerId,
                     score=answer.aiEvaluation.score,
                     question=next(
                         (
@@ -129,8 +127,7 @@ class StudyService:
                         ),
                         uuid4(),
                     ),
-                    # ダミーで現在日時
-                    answered_at=datetime.date.today(),
+                    answered_at=answer.answeredAt,
                     answer_time_minutes=3,  # ダミーで3分
                     answer_time_seconds=20,  # ダミーで20秒
                     is_completed_review=any(
@@ -145,7 +142,7 @@ class StudyService:
         self, user_id: UUID, user_answer_id: UUID
     ) -> QuizStudyRecordResponse:
         """クイズの学習履歴単体を取得する。"""
-        userAnswer = await self.userAnswerRepository.getById(user_id)
+        userAnswer = await self.userAnswerRepository.getById(user_answer_id)
 
         quiz = await self.quizRepository.getById(userAnswer.quizId)
 
@@ -159,8 +156,9 @@ class StudyService:
                 UserAnswerResponse(
                     user_answer=answer.answer,
                     ai_evaluation_score=answer.aiEvaluation.score,
-                    answered_at=datetime.date.today(),  # ダミーで現在日時
+                    answered_at=answer.answeredAt,
                     ai_feedback=answer.aiEvaluation.feedback,
+                    ai_model_answer=answer.aiEvaluation.modelAnswer,
                 )
                 for answer in userAnswers
             ],
@@ -202,6 +200,7 @@ class StudyService:
             quizId=quiz.quizId,
             answer=request.user_answer,
             aiEvaluation=evaluation,
+            answeredAt=datetime.datetime.now(),
         )
 
         # ユーザーの回答、及びAIの回答を保存する

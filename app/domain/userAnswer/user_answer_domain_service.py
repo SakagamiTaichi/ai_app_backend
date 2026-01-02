@@ -93,10 +93,20 @@ class UserAnswerDomainService:
                     for schedule in reviewSchedules
                 )
             ]
+
+            # deadline_quizzes.sort(
+            #     key=lambda quiz: min(
+            #         schedule.reviewDeadLine
+            #         for schedule in reviewSchedules
+            #         if schedule.quizId == quiz.quizId
+            #         and schedule.reviewDeadLine < datetime.now()
+            #     )
+            # )
         match questionType:
             case QuestionType.REVIEW:
                 # 復習クイズの中から一つを返す
                 if deadline_quizzes:
+                    random.shuffle(deadline_quizzes)
                     return deadline_quizzes[0]
                 else:
                     raise NotFoundError("挑戦可能なクイズが存在しません。")
@@ -105,6 +115,8 @@ class UserAnswerDomainService:
             case QuestionType.NEW:
                 # 新規クイズの中から一つを返す
                 if not_answered_quizzes:
+                    # シャッフルする
+                    random.shuffle(not_answered_quizzes)
                     return not_answered_quizzes[0]
                 else:
                     raise NotFoundError("挑戦可能なクイズが存在しません。")
@@ -113,10 +125,7 @@ class UserAnswerDomainService:
             case QuestionType.MIXED:
                 # 復習クイズと新規クイズの中から一つを返
                 # 復習クイズと新規クイズをミックスする。ただし、数を同数にする
-                all_quizzes = (
-                    not_answered_quizzes[0 : len(deadline_quizzes) + 1]
-                    + deadline_quizzes
-                )
+                all_quizzes = not_answered_quizzes + deadline_quizzes
 
                 if all_quizzes:
                     # シャッフルしてランダムに一つを返す

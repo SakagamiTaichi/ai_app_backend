@@ -18,12 +18,13 @@ class QuizTypePostgresRepository(QuizTypeRepository):
             stmt = select(QuizType)
             result = await self.db.execute(stmt)
             quiz_types = result.scalars().all()
-            
+
             return [
                 QuizTypeEntity(
+                    abbreviation=quiz_type.abbreviation,  # type: ignore
                     quizTypeId=quiz_type.quiz_type_id,  # type: ignore
                     name=quiz_type.name,  # type: ignore
-                    description=quiz_type.description if quiz_type.description else ""  # type: ignore
+                    description=quiz_type.description if quiz_type.description else "",  # type: ignore
                 )
                 for quiz_type in quiz_types
             ]

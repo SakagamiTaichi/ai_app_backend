@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     # 認証関連の設定
     SECRET_KEY: str = ""  # JWT署名用の秘密鍵
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 120
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 14
 
     # Resend設定
     RESEND_API_KEY: str = ""

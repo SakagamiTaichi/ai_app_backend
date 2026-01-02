@@ -34,6 +34,7 @@ class UserAnswerPostgresRepository(UserAnswerRepository):
                     feedback=user_answer.feedback or "",  # type: ignore
                     modelAnswer=user_answer.model_answer or "",  # type: ignore
                 ),
+                answeredAt=user_answer.created_at,  # type: ignore
             )
         except Exception as e:
             raise e
@@ -56,6 +57,7 @@ class UserAnswerPostgresRepository(UserAnswerRepository):
                         feedback=user_answer.feedback or "",  # type: ignore
                         modelAnswer=user_answer.model_answer or "",  # type: ignore
                     ),
+                    answeredAt=user_answer.created_at,  # type: ignore
                 )
                 for user_answer in user_answers
             ]
@@ -84,6 +86,7 @@ class UserAnswerPostgresRepository(UserAnswerRepository):
                         feedback=user_answer.feedback or "",  # type: ignore
                         modelAnswer=user_answer.model_answer or "",  # type: ignore
                     ),
+                    answeredAt=user_answer.created_at,  # type: ignore
                 )
                 for user_answer in user_answers
             ]

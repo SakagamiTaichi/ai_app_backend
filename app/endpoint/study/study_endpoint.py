@@ -98,7 +98,6 @@ async def get_study_records(
     token: Annotated[str, Depends(oauth2_scheme)],
     study_service: Annotated[StudyService, Depends(get_service)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
-    quiz_type_id: Annotated[Optional[UUID], Query(description="クイズの種類ID")] = None,
 ) -> QuizStudyRecordsResponse:
     """クイズの学習履歴をまとめて取得するエンドポイント"""
     current_user = await auth_service.get_current_user(token)

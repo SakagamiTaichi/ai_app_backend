@@ -101,7 +101,7 @@ class PracticePostgresRepository(PracticeRepository):
             )
             conversation = result.scalar_one_or_none()
 
-            if not conversation or str(conversation.user_id) != user_id:
+            if conversation is None or conversation.user_id != user_id:  # type: ignore
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="このリソースにアクセスする権限がありません",

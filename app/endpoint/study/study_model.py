@@ -34,7 +34,7 @@ class StudyRecordsResponse(BaseModel):
     score: int = Field(..., description="スコア")
     question: str = Field(..., description="クイズの問題文")
     quiz_type_id: UUID = Field(..., description="クイズの種類ID")
-    answered_at: datetime.date = Field(..., description="回答日時")
+    answered_at: datetime.datetime = Field(..., description="回答日時")
     answer_time_minutes: int = Field(..., description="回答にかかった時間（分）")
     answer_time_seconds: int = Field(..., description="回答にかかった時間（秒）")
     is_completed_review: bool = Field(..., description="復習が完了しているかどうか")
@@ -44,7 +44,7 @@ class QuizStudyRecordsResponse(BaseModel):
     """クイズの学習履歴のレスポンスモデル"""
 
     records: List[StudyRecordsResponse] = Field(..., description="学習履歴のリスト")
-    quiz_types: QuizTypesResponse = Field(..., description="クイズの種類のリスト")
+    quiz_types: List[QuizTypeResponse] = Field(..., description="クイズの種類のリスト")
 
 
 class UserAnswerResponse(BaseModel):
@@ -52,8 +52,9 @@ class UserAnswerResponse(BaseModel):
 
     user_answer: str = Field(..., description="ユーザーの回答")
     ai_evaluation_score: int = Field(..., description="スコア")
-    answered_at: datetime.date = Field(..., description="回答日時")
+    answered_at: datetime.datetime = Field(..., description="回答日時")
     ai_feedback: str = Field(..., description="AIからのフィードバック")
+    ai_model_answer: str = Field(..., description="AIの模範回答")
 
 
 class QuizStudyRecordResponse(BaseModel):
