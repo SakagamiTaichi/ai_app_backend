@@ -11,4 +11,3 @@ venv/
 # UV関連
 .venv/
 uv.lock
-.python-version
