@@ -2,51 +2,63 @@
 必ず日本語で返答してください。
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Development Setup (UV)
+
+### Prerequisites
+- Python 3.12+
+- UV package manager
+
+### Installation
+```bash
+# Install UV (Windows PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Install dependencies
+uv sync --all-extras
+```
+
 ## Development Commands
 
 ### Database Migrations (Alembic)
 ```bash
 # Generate new migration
-alembic revision --autogenerate -m "migration description"
+uv run alembic revision --autogenerate -m "migration description"
 
 # Apply all pending migrations
-alembic upgrade head
+uv run alembic upgrade head
 
 # Apply specific migration
-alembic upgrade <revision_id>
+uv run alembic upgrade <revision_id>
 
 # Rollback one migration
-alembic downgrade -1
+uv run alembic downgrade -1
 ```
 
 ### Application
 ```bash
-# Install dependencies
-pip install -r requirements.txt
-
 # Run development server
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 # Run production server (Render deployment)
-uvicorn main:app --host 0.0.0.0 --port $PORT
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
 ### Testing
 ```bash
 # Run all tests
-pytest
+uv run pytest
 
 # Run tests with verbose output
-pytest -v
+uv run pytest -v
 
 # Run specific test file
-pytest tests/repository/test_auth_postgres_repository.py
+uv run pytest tests/repository/test_auth_postgres_repository.py
 
 # Run tests with coverage
-pytest --cov=app
+uv run pytest --cov=app
 
 # Run tests and generate HTML coverage report
-pytest --cov=app --cov-report=html
+uv run pytest --cov=app --cov-report=html
 ```
 
 ## Architecture Overview
